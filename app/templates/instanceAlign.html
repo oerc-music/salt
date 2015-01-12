@@ -1,0 +1,90 @@
+<html>
+    <head>
+        <script type="text/javascript" src="{{ url_for('static', filename='jquery-2.1.3.min.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='instanceAlign.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='instanceAlign.css') }}"></style>
+        <style>
+            .matchReference { 
+                cursor: url({{ url_for('static', filename='undo.png') }}), not-allowed;
+            }
+        </style>
+        <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="algselector">
+            Please select fuzzymatch algorithm: 
+            <select id="matchAlgorithmSelector" onChange="refreshLists()">
+                <option selected="selected" value="http://127.0.0.1:8890/matchAlgorithm/exactMatch">Exact match</option>
+                <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-set-ratio">Token-Set ratio</option>
+                <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-sort-ratio">Token-Sort ratio</option>
+                <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_partial-ratio">Partial ratio</option>
+                <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_simple-ratio">Simple ratio</option>
+            </select>
+        </div>
+        <div class="lockcontrols">
+            <span class="lock lockActive" id="lockright" onClick="if($('#lockright').hasClass('lockActive')) { 
+                                                            handleLocks();
+                                                            scrollLock('right');
+                                                       }">
+                <i class="fa fa-lock fa-2x"></i>
+                <i class="fa fa-arrow-right fa-2x"></i>
+            </span>
+            <span class="lock" id="lockcentre" onClick="if($('#lockcentre').hasClass('lockActive')) { handleLocks(); }">
+
+            </span>
+            <span class="lock lockActive" id="lockleft" onClick="if($('#lockleft').hasClass('lockActive')) { 
+                                                            handleLocks();
+                                                            scrollLock('left');
+                                                       }">
+                <i class="fa fa-arrow-left fa-2x"></i>
+                <i class="fa fa-lock fa-2x"></i>
+            </span>
+        </div>
+        <div id="displayWrapper">
+            <div id="listWrapper">
+                <div class="scrollable" id="left">
+                </div>
+                <div class="scrollable" id="right">
+                </div>
+                <div class="scrollable hiddenScores" id="scores">
+                </div>
+            </div>
+            <div id="selectionDisplay">
+                <span id="leftSelected"></span>
+                <span id="rightSelected"></span>
+                <span id="selectedScore"></span>
+            </div>
+            <div id="confirmPanel">
+                <span id="confirmMatch"><i class="fa fa-thumbs-up fa-2x"></i></span>
+                <span id="disconfirmMatch"><i class="fa fa-thumbs-down fa-2x"></i></span>
+            </div>
+        </div>
+        <script>
+            {# build the JSON object that corresponds to our SPARQL results
+               Note: the outer/inner Delim business is simply there because
+               the JSON spec does not allow for trailing commas 
+            #}
+            var fuzz = { 
+                {% set outerDelim = "" %}
+                {% for mA in results.keys() %}
+                     {{outerDelim}}"{{ mA }}": [
+                         {% set innerDelim = "" %} 
+                         {% for result in results[mA] %}
+                         {{innerDelim}}{
+                            "matchuri": "{{ result["matchuri"]|safe }}",
+                            "lefturi": "{{ result["emsuri"]|safe }}",
+                            "leftlabel": "{{ result["emsname"]|safe }}",
+                            "righturi": "{{ result["slickuri"]|safe }}",
+                            "rightlabel": "{{ result["slickname"]|safe }}",
+                            "score": "{{ result["score"]|safe }}"
+                         }
+                         {% set innerDelim = "," %}
+                         {% endfor %}
+                   ]
+                 {% set outerDelim = "," %}
+                 {% endfor %}
+            }
+        </script>
+        </body>
+</html>
+

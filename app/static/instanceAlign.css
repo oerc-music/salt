@@ -1,0 +1,133 @@
+#displayWrapper {
+    max-width:700px;
+    position:relative;
+    font-family:sans-serif;
+}
+
+#listWrapper { 
+    overflow:hidden;
+}
+
+#left { 
+    min-height:400px;
+    max-height:400px;
+    float:left;
+    width:45%;
+    display:inline-block;
+    background:#ddffdd;
+}
+
+#right { 
+    max-height:400px;
+    min-height:400px;
+    background:#ddddff;
+    display:inline-block;
+    width:45%;
+}
+
+#scores {
+    max-height:400px;
+    min-height:400px;
+    width:10%;
+    background: #ffdddd;
+    float:right;
+    overflow:hidden;
+}
+
+.scrollable { 
+    overflow:auto;
+}
+
+.scrollitem {
+    cursor:pointer;
+}
+
+.scrollitem .empty { 
+    min-height:1px;
+    cursor:default;
+}
+
+.leftHighlight, .rightHighlight {
+    color:#ff0000;
+    background: #ffdddd;
+}
+
+.lockcontrols { 
+    margin-top: 10px;
+    width: 700px;
+    color: #bbbbbb;
+    cursor:default;
+}
+
+#lockright { 
+    margin-left: 0%;
+}
+
+#lockleft {
+    margin-left: 36%;
+}
+
+#lockcentre { 
+    margin-left: 34%;
+}
+
+.lockActive { 
+    color:#000000;
+    cursor:pointer;
+}
+
+.hiddenScores {
+    background:#dddddd !important;
+}
+
+.hiddenScores .scrollitem {
+    visibility:hidden;
+}
+
+#selectionDisplay { 
+    margin-top:10px;
+    font-weight:bold;
+}
+
+#leftSelected { 
+    float:left;
+    color:#339933;
+}
+
+#rightSelected { 
+    position:absolute;
+    left:45%;
+    color:#333399;
+}
+
+#selectedScore { 
+    position:absolute;
+    left:90%;
+    color:#993333;
+}
+
+#confirmPanel { 
+    visibility:hidden;
+    margin-top: 30px;
+    position:absolute;
+}
+
+#confirmPanel i { 
+    cursor:pointer;
+}
+
+#confirmMatch i { 
+    background:#006600;
+    color:#ddffdd;
+}
+
+#disconfirmMatch i { 
+    margin-left: 20px;
+    background:#660000;
+    color:#ffdddd;
+}
+
+.matchReference { 
+    text-decoration:underline;
+}
+
