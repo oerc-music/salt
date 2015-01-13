@@ -2,6 +2,9 @@
 // variables to differentiate between single and dblclicks in the handleHighlight function
 var DELAY = 250, clicks = 0, timer = null;
 
+// websocket variable (initialized in $(document).ready
+var socket
+
 function handleHighlights() {
     // handle the highlighting and display selected logic:
     handleHighlight('left');
@@ -93,6 +96,7 @@ function handleConfirmDisconfirm() {
                 var lefturi = $('.leftHighlight').attr("id");
                 var righturi = $('.rightHighlight').attr("id");
                 var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+                socket.emit('confirmDisconfirmEvent', {data: [confStatus, aligneduri, confReason]});
                 console.log(confStatus + ": " +  aligneduri + " (reason: " + confReason + ")");
             }
 
@@ -206,5 +210,18 @@ function loadMatchesForSelected(leftright, selected) {
 
 }
 
-// initialize stuff
-$(document).ready(function() { handleLocks(); handleScrolling(); refreshLists(); handleConfirmDisconfirm(); });
+$(document).ready(function() { 
+    // initialize stuff
+    handleLocks(); handleScrolling(); refreshLists(); handleConfirmDisconfirm(); 
+
+    // set up websocket
+   socket=io.connect('http://' + document.domain + ':' + location.port); 
+   socket.on('connect', function() { 
+       socket.emit('clientConnectionEvent', 'Client connected.');
+   });
+
+    // set up websocket handlers
+   socket.on('confirmDisconfirmHandled', function(msg) {
+       console.log("Server handled: ", msg)
+   })
+});

@@ -1,8 +1,15 @@
-from app import app
-from flask import render_template, Markup
+#from app import app
+from flask import Flask, render_template, Markup
+from flask.ext.socketio import SocketIO, emit
 import sys
 from pprint import pprint
 from SPARQLWrapper import SPARQLWrapper, JSON
+
+app = Flask(__name__)
+app.debug = True
+***REMOVED***
+
+socketio = SocketIO(app)
 
 @app.route('/')
 @app.route('/index')
@@ -82,3 +89,15 @@ def instance():
             toTemplate[result["ma"]["value"]] = [thisResult]
             
     return render_template('instanceAlign.html', results = toTemplate)
+
+
+@socketio.on('confirmDisconfirmEvent')
+def socket_message(message):
+    emit('confirmDisconfirmHandled', message)
+
+@socketio.on('clientConnectionEvent')
+def socket_connect(message):
+    print(message);
+
+if __name__ == '__main__':
+    socketio.run(app)
