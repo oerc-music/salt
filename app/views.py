@@ -93,11 +93,46 @@ def instance():
 
 @socketio.on('confirmDisconfirmEvent')
 def socket_message(message):
-    emit('confirmDisconfirmHandled', message)
+    storeConfirmDisconfirm(message)
+    emit('confirmDisconfirmHandled', "OK!")
 
 @socketio.on('clientConnectionEvent')
 def socket_connect(message):
     print(message);
+
+
+def storeConfirmDisconfirm(message):
+    print "Okay! lalala"
+    pprint(message)
+    # Take the user's input
+    # ideally, sanitize it a bit
+    # and store it as triples
+    if (message['confStatus'] and message['lefturi'] and message['righturi'] and message['aligneduri'] and message['timestamp'] and message['user']): 
+        print ("HERE WE GO: ", message['aligneduri'], message['confStatus'], message['confReason'], message['user'], message['aligneduri'], message['timestamp'], message['lefturi'], message['righturi'] )
+        sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+        sparql.method = "POST"
+        #Generate triples:
+        turtle = """ INSERT INTO GRAPH <http://127.0.0.1:8890/matchDecisions>
+        {{
+            <{0}> a <http://127.0.0.1:8890/matchDecision> ;
+                <http://127.0.0.1:8890/matchDecisionStatus> '{1}' ;
+                <http://127.0.0.1:8890/matchDecisionReason> '{2}' ;
+                <http://127.0.0.1:8890/matchDecisionMaker> '{3}' ;
+                <http://127.0.0.1:8890/matchURI> <{4}> ;
+                <http://127.0.0.1:8890/matchDecisionTimestamp> '{5}' .
+            <{6}> <http://127.0.0.1:8890/matchParticipant> <{0}> .
+            <{7}> <http://127.0.0.1:8890/matchParticipant> <{0}> .
+        }}"""
+	queryString = turtle.format(message['aligneduri'], message['confStatus'], message['confReason'], message['user'], message['aligneduri'], message['timestamp'], message['lefturi'], message['righturi'])
+	print queryString
+        sparql.setQuery(queryString)
+        outcome = sparql.query()
+        print "Outcome of triple insert was: "
+        print outcome
+                
+    else:
+        print "Something important is missing in the message:"
+        pprint(message)
 
 if __name__ == '__main__':
     socketio.run(app)

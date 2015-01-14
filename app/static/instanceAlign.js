@@ -1,3 +1,6 @@
+// TODO Determine this through authentication!
+var userid = "testuser";
+
 
 // variables to differentiate between single and dblclicks in the handleHighlight function
 var DELAY = 250, clicks = 0, timer = null;
@@ -96,7 +99,7 @@ function handleConfirmDisconfirm() {
                 var lefturi = $('.leftHighlight').attr("id");
                 var righturi = $('.rightHighlight').attr("id");
                 var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
-                socket.emit('confirmDisconfirmEvent', {data: [confStatus, aligneduri, confReason]});
+                socket.emit('confirmDisconfirmEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
                 console.log(confStatus + ": " +  aligneduri + " (reason: " + confReason + ")");
             }
 
