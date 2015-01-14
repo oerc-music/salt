@@ -103,10 +103,9 @@ def socket_connect(message):
 
 def storeConfirmDisconfirm(message):
     print "Okay! lalala"
+    message = sanitize(message)
     pprint(message)
-    # Take the user's input
-    # ideally, sanitize it a bit
-    # and store it as triples
+    # Take the user's input and store it as triples
     if (message['confStatus'] and message['lefturi'] and message['righturi'] and message['aligneduri'] and message['timestamp'] and message['user']): 
         print ("HERE WE GO: ", message['aligneduri'], message['confStatus'], message['confReason'], message['user'], message['aligneduri'], message['timestamp'], message['lefturi'], message['righturi'] )
         sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
@@ -134,5 +133,17 @@ def storeConfirmDisconfirm(message):
         print "Something important is missing in the message:"
         pprint(message)
 
+
+def sanitize(message) : 
+    # sanitize user input
+    # TODO find a python library that does this properly
+    for key in message:
+        print key
+        message[key] = str(message[key]).replace("'", "&#39;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;")
+    return message
+
 if __name__ == '__main__':
     socketio.run(app)
+
+
+
