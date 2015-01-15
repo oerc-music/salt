@@ -99,15 +99,19 @@ function handleConfirmDisconfirm() {
                 var righturi = $('.rightHighlight').attr("id");
                 var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
                 // remember this decision locally
-                fuzz[confStatus].push(
-                        {
-                            matchuri: aligneduri, 
-                            lefturi: lefturi, 
-                            righturi:righturi, 
-                            leftlabel:$('#leftSelected').html(), 
-                            rightlabel:$('#rightSelected').html(), 
-                            reason:confReason
-                        });
+                var thisMatch = {
+                                    matchuri: aligneduri, 
+                                    lefturi: lefturi, 
+                                    righturi:righturi, 
+                                    leftlabel:$('#leftSelected').html(), 
+                                    rightlabel:$('#rightSelected').html(), 
+                                    reason:confReason
+                                };
+                if(fuzz[confStatus] !== undefined) { 
+                    fuzz[confStatus].push(thisMatch);
+                } else { 
+                    fuzz[confStatus] = [thisMatch];
+                }
                 // and send this decision to the server, for persistent storage
                 socket.emit('confirmDisconfirmEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
             }
@@ -235,6 +239,7 @@ $(document).ready(function() {
    socket=io.connect('http://' + document.domain + ':' + location.port); 
    socket.on('connect', function() { 
        socket.emit('clientConnectionEvent', 'Client connected.');
+       console.log("Connected to server");
    });
 
     // set up websocket handlers

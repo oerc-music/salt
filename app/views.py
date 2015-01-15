@@ -51,6 +51,7 @@ def index():
     
 
 @app.route('/instance')
+@app.route('/salt')
 def instance():
     # First grab all EMS - SLICK stringmatch pairings with their scores for all matching algorithms
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
