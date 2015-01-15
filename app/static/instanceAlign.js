@@ -82,25 +82,34 @@ function handleConfirmDisconfirm() {
             var confStatus;
             var confMsg
             if ($(this).hasClass("fa-thumbs-up")) {
-                confStatus = "confirmedMatch";
+                confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
                 confMsg = "Confirm match: ";
 
             }
             else { 
-                confStatus = "disconfirmedMatch";
+                confStatus = "http://127.0.0.1:8890/matchAlgorithm/disconfirmedMatch";
                 confMsg = "Disconfirm match: ";
             }
 
 
-            // TODO: do something with it, i.e. generate triples for this decision and store them 
             var confReason = prompt(confMsg + $('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
             if(confReason != null) { 
                 // generate the aligned uri (based on left uri + right uri)
                 var lefturi = $('.leftHighlight').attr("id");
                 var righturi = $('.rightHighlight').attr("id");
                 var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+                // remember this decision locally
+                fuzz[confStatus].push(
+                        {
+                            matchuri: aligneduri, 
+                            lefturi: lefturi, 
+                            righturi:righturi, 
+                            leftlabel:$('#leftSelected').html(), 
+                            rightlabel:$('#rightSelected').html(), 
+                            reason:confReason
+                        });
+                // and send this decision to the server, for persistent storage
                 socket.emit('confirmDisconfirmEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
-                console.log(confStatus + ": " +  aligneduri + " (reason: " + confReason + ")");
             }
 
     });
@@ -113,12 +122,17 @@ function handleScoreDisplay() {
     if(leftSel && rightSel) { 
         // both sides have a selection
         // see if we have it in our bag
-        var mA = $("#matchAlgorithmSelector").val();
+        var mA = $("#modeSelector").val();
         for(var match in fuzz[mA])  {
             if(fuzz[mA][match]["leftlabel"] === leftSel && 
                fuzz[mA][match]["rightlabel"] === rightSel) { 
+               console.log(mA)
+               if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disconfirmedMatch") { 
+                   $('#selectedScore').html(fuzz[mA][match]["reason"])
+               } else { 
                 $('#selectedScore').html(fuzz[mA][match]["score"]);
-                break;
+               }
+               break;
             }
         }
     }
@@ -153,7 +167,7 @@ function scrollLock(leftright) {
 
 function refreshLists() {
     // 1. Get the match algorithm from the selection list
-    var mA = $("#matchAlgorithmSelector").val();
+    var mA = $("#modeSelector").val();
     // 2. Grab the lists (so we don't have to keep searching the DOM every time):
     var leftList = $("#left");
     var rightList = $("#right");
@@ -188,7 +202,7 @@ function loadMatchesForSelected(leftright, selected) {
     $('#' + target + 'Selected').html("")
     $('#selectedScore').html("")
     // load up all matches to that name on the other list
-    var mA = $("#matchAlgorithmSelector").val();
+    var mA = $("#modeSelector").val();
     var sourceList = $("#" + leftright);
     var targetList = $("#" + target);
     var scoresList = $("#scores");

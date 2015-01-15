@@ -52,7 +52,7 @@ def index():
 
 @app.route('/instance')
 def instance():
-    # First grab all EMS - SLICK pairings with their scores for all algorithms
+    # First grab all EMS - SLICK stringmatch pairings with their scores for all matching algorithms
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setQuery("""
         PREFIX : <http://127.0.0.1:8890/>
@@ -70,13 +70,32 @@ def instance():
         ORDER BY DESC(?score) ?emsname ?slickname
     """)
     sparql.setReturnFormat(JSON)
-    results = sparql.query().convert()
-    # Parse into a nice data structure to send to the template:
-    # A dict containing keys for each match algorithm
+    stringMatchResults = sparql.query().convert()
+
+    # Now grab any match decisions (confirmations/disconfirmations) established in previous sessions
+    sparql.setQuery("""
+    PREFIX : <http://127.0.0.1:8890/>
+    SELECT DISTINCT ?matchuri ?emsuri ?emsname ?slickuri ?slickname ?decision ?reason 
+    WHERE {
+        ?matchuri a :matchDecision ;
+                  :matchDecisionStatus ?decision ;
+                  :matchDecisionReason ?reason .
+        ?emsuri :matchParticipant ?matchuri ;
+                dc:contributor ?emsname .
+        ?slickuri :matchParticipant ?matchuri ;
+                rdfs:label ?slickname .
+    }
+    ORDER BY ?emsname ?slickname
+    """)
+    matchDecisions = sparql.query().convert()
+
+    # Parse all results into a nice data structure to send to the template:
+    # A dict containing keys for each mode (match algorithm or decision status)
     # Each has a value that is a list of dicts,
     # one dict (list item) per match
     toTemplate = dict()
-    for result in results["results"]["bindings"]:
+
+    for result in stringMatchResults["results"]["bindings"]:
         thisResult = { "matchuri": result["mtc"]["value"],
                       "emsuri": result["ems"]["value"],
                       "emsname": result["emsname"]["value"],
@@ -87,6 +106,19 @@ def instance():
             toTemplate[result["ma"]["value"]].append(thisResult)
         else:
             toTemplate[result["ma"]["value"]] = [thisResult]
+
+    for result in matchDecisions["results"]["bindings"]:
+        thisResult = {"matchuri": result["matchuri"]["value"],
+                      "decision": result["decision"]["value"],
+                      "reason": result["reason"]["value"],
+                      "emsuri": result["emsuri"]["value"],
+                      "emsname": result["emsname"]["value"],
+                      "slickuri": result["slickuri"]["value"],
+                      "slickname": result["slickname"]["value"]}
+        if result["decision"]["value"] in toTemplate:
+            toTemplate[result["decision"]["value"]].append(thisResult)
+        else: 
+            toTemplate[result["decision"]["value"]] = [thisResult]
             
     return render_template('instanceAlign.html', results = toTemplate)
 
@@ -102,12 +134,10 @@ def socket_connect(message):
 
 
 def storeConfirmDisconfirm(message):
-    print "Okay! lalala"
     message = sanitize(message)
     pprint(message)
     # Take the user's input and store it as triples
     if (message['confStatus'] and message['lefturi'] and message['righturi'] and message['aligneduri'] and message['timestamp'] and message['user']): 
-        print ("HERE WE GO: ", message['aligneduri'], message['confStatus'], message['confReason'], message['user'], message['aligneduri'], message['timestamp'], message['lefturi'], message['righturi'] )
         sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
         sparql.method = "POST"
         #Generate triples:
@@ -139,7 +169,7 @@ def sanitize(message) :
     # TODO find a python library that does this properly
     for key in message:
         print key
-        message[key] = str(message[key]).replace("'", "&#39;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;")
+        message[key] = str(message[key]).replace("'", "&#39;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;")
     return message
 
 if __name__ == '__main__':
