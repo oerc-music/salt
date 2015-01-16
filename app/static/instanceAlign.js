@@ -271,7 +271,10 @@ function modalAdjust() {
         $('#scores').css("width", "370px");
         $('.lockcontrols').css('visibility', 'hidden');
         $('#confirmPanel').css('visibility', 'hidden');
-
+        // always lock scrolling in display-decisions mode
+        if(!($('#lockcentre').hasClass('lockActive'))) { 
+            handleLocks();
+        }
    }
    else { 
        $('#scores').css("width", "50px");
