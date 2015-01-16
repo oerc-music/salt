@@ -17,7 +17,7 @@
             Please select mode: 
             <select id="modeSelector" onChange="refreshLists()">
                 <option value="http://127.0.0.1:8890/matchAlgorithm/confirmedMatch">Confirmed by you</option>
-                <option value="http://127.0.0.1:8890/matchAlgorithm/disconfirmedMatch">Disconfirmed by you</option>
+                <option value="http://127.0.0.1:8890/matchAlgorithm/disputedMatch">Disputed by you</option>
                 <option selected="selected" value="http://127.0.0.1:8890/matchAlgorithm/exactMatch">Exact matches</option>
                 <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-set-ratio">Token-Set ratio</option>
                 <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-sort-ratio">Token-Sort ratio</option>
@@ -50,7 +50,9 @@
                 </div>
                 <div class="scrollable" id="right">
                 </div>
-                <div class="scrollable hiddenScores" id="scores">
+                <div id="scoresWrapper">
+                    <div class="scrollable hiddenScores" id="scores">
+                    </div>
                 </div>
             </div>
             <div id="selectionDisplay">
@@ -60,7 +62,7 @@
             </div>
             <div id="confirmPanel">
                 <span id="confirmMatch"><i class="fa fa-thumbs-up fa-2x"></i></span>
-                <span id="disconfirmMatch"><i class="fa fa-thumbs-down fa-2x"></i></span>
+                <span id="disputeMatch"><i class="fa fa-thumbs-down fa-2x"></i></span>
             </div>
         </div>
         <script>
@@ -73,7 +75,7 @@
                 {% for mode in results.keys() %}
                     {{outerDelim}}"{{ mode }}": [
                     {% set innerDelim = "" %} 
-                        {% if mode in ('http://127.0.0.1:8890/matchAlgorithm/confirmedMatch', 'http://127.0.0.1:8890/matchAlgorithm/disconfirmedMatch') %}
+                        {% if mode in ('http://127.0.0.1:8890/matchAlgorithm/confirmedMatch', 'http://127.0.0.1:8890/matchAlgorithm/disputedMatch') %}
                              {% for result in results[mode] %}
                              {{innerDelim}}{
                                 "matchuri": "{{ result["matchuri"]|safe }}",

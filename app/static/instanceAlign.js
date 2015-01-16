@@ -9,9 +9,19 @@ var DELAY = 250, clicks = 0, timer = null;
 var socket
 
 function handleHighlights() {
-    // handle the highlighting and display selected logic:
-    handleHighlight('left');
-    handleHighlight('right');
+    var mA = $('#modeSelector').val();
+    // if we are in a mode that requires highlighting:
+    if(mA !== "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" && mA !== "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
+        // indicate to user that they can click on scrollitems
+        $('.scrollitem').css("cursor", "pointer"); 
+        // handle the highlighting and display-selected logic:
+        handleHighlight('left');
+        handleHighlight('right');
+    }
+    else { 
+        // indicate to user that they shouldn't bother clicking on stuff
+        $('.scrollitem').css("cursor", "default");
+    }
 }
 
 function handleHighlight(leftright) {
@@ -77,7 +87,7 @@ function handleHighlight(leftright) {
     });
 }
 
-function handleConfirmDisconfirm() { 
+function handleConfirmDispute() { 
     $('#confirmPanel i').click(function() { 
             var confStatus;
             var confMsg
@@ -87,8 +97,8 @@ function handleConfirmDisconfirm() {
 
             }
             else { 
-                confStatus = "http://127.0.0.1:8890/matchAlgorithm/disconfirmedMatch";
-                confMsg = "Disconfirm match: ";
+                confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
+                confMsg = "Dispute match: ";
             }
 
 
@@ -113,7 +123,7 @@ function handleConfirmDisconfirm() {
                     fuzz[confStatus] = [thisMatch];
                 }
                 // and send this decision to the server, for persistent storage
-                socket.emit('confirmDisconfirmEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
+                socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
             }
 
     });
@@ -131,7 +141,7 @@ function handleScoreDisplay() {
             if(fuzz[mA][match]["leftlabel"] === leftSel && 
                fuzz[mA][match]["rightlabel"] === rightSel) { 
                console.log(mA)
-               if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disconfirmedMatch") { 
+               if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
                    $('#selectedScore').html(fuzz[mA][match]["reason"])
                } else { 
                 $('#selectedScore').html(fuzz[mA][match]["score"]);
@@ -170,8 +180,19 @@ function scrollLock(leftright) {
 }
 
 function refreshLists() {
-    // 1. Get the match algorithm from the selection list
+    // 0. Get rid of any previous selections...
+    $('#leftSelected').html('');
+    $('#rightSelected').html('');
+    $('#selectedScore').html('');
+    $('#confirmPanel').css("visibility", "hidden");
+    // ... and adjust style depending on mode.
+    modalAdjust();
+    // 1. Get the match algorithm (mode) from the selection list
     var mA = $("#modeSelector").val();
+    var mode = "match";
+    if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {
+        mode = "displayDecisions";
+    }
     // 2. Grab the lists (so we don't have to keep searching the DOM every time):
     var leftList = $("#left");
     var rightList = $("#right");
@@ -184,13 +205,25 @@ function refreshLists() {
     var newLeftHTML = "";
     var newRightHTML = "";
     var newScoresHTML = "";
+    var alternate = 1; // used for alternating stripe effect in display decisions view
+    var altString;
     for (var match in fuzz[mA]) { 
+        alternate *= -1;
+        if(alternate>0 && mode === "displayDecisions") { 
+            altString = " alternate";
+        } else {
+            altString = "";
+        }
         // 3. Populate the left and right list with the IDs and names from the fuzz object
-        newLeftHTML += '<div class="scrollitem" id="' + fuzz[mA][match]["lefturi"] + 
+        newLeftHTML += '<div class="scrollitem'+altString+'" id="' + fuzz[mA][match]["lefturi"] + 
                         '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
-        newRightHTML += '<div class="scrollitem" id="' + fuzz[mA][match]["righturi"] + 
+        newRightHTML += '<div class="scrollitem'+altString+'"+ id="' + fuzz[mA][match]["righturi"] + 
                         '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
-        newScoresHTML += '<div class="scrollitem">' + fuzz[mA][match]["score"] + '</div>\n';
+        if(mode === "displayDecisions") {
+            newScoresHTML += '<div class="scrollitem'+altString+'" title="'+ fuzz[mA][match]["reason"] + '">' + fuzz[mA][match]["reason"] + '&nbsp;</div>\n';
+        } else {
+            newScoresHTML += '<div class="scrollitem">' + fuzz[mA][match]["score"] + '</div>\n';
+        }
     }
     leftList.html(newLeftHTML);
     rightList.html(newRightHTML);
@@ -231,9 +264,26 @@ function loadMatchesForSelected(leftright, selected) {
 
 }
 
+function modalAdjust() {  
+   // Adjust width of score/reason column, and decide whether lock controls / confirmation panel should be visible, depending on mode
+   var mA = $('#modeSelector').val();
+   if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {  
+        $('#scores').css("width", "370px");
+        $('.lockcontrols').css('visibility', 'hidden');
+        $('#confirmPanel').css('visibility', 'hidden');
+
+   }
+   else { 
+       $('#scores').css("width", "50px");
+       $('.lockcontrols').css('visibility', 'visible');
+       // don't reveal confirm panel since it should only show after user selects an item on each side
+   }
+
+}
+
 $(document).ready(function() { 
     // initialize stuff
-    handleLocks(); handleScrolling(); refreshLists(); handleConfirmDisconfirm(); 
+    handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
 
     // set up websocket
    socket=io.connect('http://' + document.domain + ':' + location.port); 
@@ -243,7 +293,7 @@ $(document).ready(function() {
    });
 
     // set up websocket handlers
-   socket.on('confirmDisconfirmHandled', function(msg) {
+   socket.on('confirmDisputeHandled', function(msg) {
        console.log("Server handled: ", msg)
    })
 });

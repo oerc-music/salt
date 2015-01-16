@@ -73,7 +73,7 @@ def instance():
     sparql.setReturnFormat(JSON)
     stringMatchResults = sparql.query().convert()
 
-    # Now grab any match decisions (confirmations/disconfirmations) established in previous sessions
+    # Now grab any match decisions (confirmations/disputations) established in previous sessions
     sparql.setQuery("""
     PREFIX : <http://127.0.0.1:8890/>
     SELECT DISTINCT ?matchuri ?emsuri ?emsname ?slickuri ?slickname ?decision ?reason 
@@ -124,17 +124,17 @@ def instance():
     return render_template('instanceAlign.html', results = toTemplate)
 
 
-@socketio.on('confirmDisconfirmEvent')
+@socketio.on('confirmDisputeEvent')
 def socket_message(message):
-    storeConfirmDisconfirm(message)
-    emit('confirmDisconfirmHandled', "OK!")
+    storeConfirmDispute(message)
+    emit('confirmDisputeHandled', "OK!")
 
 @socketio.on('clientConnectionEvent')
 def socket_connect(message):
     print(message);
 
 
-def storeConfirmDisconfirm(message):
+def storeConfirmDispute(message):
     message = sanitize(message)
     pprint(message)
     # Take the user's input and store it as triples

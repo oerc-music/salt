@@ -1,5 +1,5 @@
 #displayWrapper {
-    max-width:700px;
+    max-width:1000px;
     position:relative;
     font-family:sans-serif;
 }
@@ -12,9 +12,13 @@
     min-height:400px;
     max-height:400px;
     float:left;
-    width:45%;
+    width:315px;
     display:inline-block;
     background:#ddffdd;
+}
+
+#left .alternate {
+    background:#f0fff0;
 }
 
 #right { 
@@ -22,16 +26,36 @@
     min-height:400px;
     background:#ddddff;
     display:inline-block;
-    width:45%;
+    width:315px;
 }
 
-#scores {
+#right .alternate { 
+   background:#f0f0ff;
+}
+
+#scoresWrapper {
     max-height:400px;
     min-height:400px;
-    width:10%;
-    background: #ffdddd;
     float:right;
+    width: 370px;
+    background: #ffffff;
+}
+
+#scores{
+    max-height:400px;
+    min-height:400px;
+    background: #ffdddd;
     overflow:hidden;
+    white-space:nowrap;
+    position:relative;
+}
+
+#scores .alternate { 
+    background:#fff0f0;
+}
+
+#scores .scrollitem {
+    cursor:default !important;
 }
 
 .scrollable { 
@@ -39,12 +63,12 @@
 }
 
 .scrollitem {
-    cursor:pointer;
+    overflow: visible;
 }
 
 .scrollitem .empty { 
     min-height:1px;
-    cursor:default;
+    cursor:default !important;
 }
 
 .leftHighlight, .rightHighlight {
@@ -121,7 +145,7 @@
     color:#ddffdd;
 }
 
-#disconfirmMatch i { 
+#disputeMatch i { 
     margin-left: 20px;
     background:#660000;
     color:#ffdddd;
