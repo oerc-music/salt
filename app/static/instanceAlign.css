@@ -8,6 +8,23 @@
     overflow:hidden;
 }
 
+#saltsets {
+    font-size:60%;
+    margin-bottom:20px;
+}
+
+#saltsets a { 
+    text-decoration:none;
+}
+
+#saltsets #saltsetA { 
+    background:#ddffdd;
+}
+
+#saltsets #saltsetB { 
+    background:#ddddff;
+}
+
 #left { 
     min-height:400px;
     max-height:400px;
@@ -120,13 +137,13 @@
 
 #rightSelected { 
     position:absolute;
-    left:45%;
+    left:31.5%;
     color:#333399;
 }
 
 #selectedScore { 
     position:absolute;
-    left:90%;
+    left:63%;
     color:#993333;
 }
 

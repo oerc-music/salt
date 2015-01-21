@@ -4,16 +4,19 @@
 <body>
 <div>
     Which data sets would you like to compare?
-    Left side: 
-    <select id="leftDataSelector">
-        <option value="EMS" selected="selected">Early Music Show</option>
-        <option value="slickmemPersons">SLICKMEM Persons</option>
-        <option value="slickmemItemCreators">SLICKMEM Persons (URIs)</option>
-    </select>
-    Right side:
-    <select id="rightDataSelector">
-        <option value="EMS">Early Music Show</option>
-        <option value="slickmemPersons" selected="selected">SLICKMEM Persons (URIs)</option>
-        <option value="slickmemItemCreators">SLICKMEM Item Creators (strings)</option>
-    </select>
+    <form action="/salt" method="GET">
+        Left side:
+        <select id="leftDataSelector" name="saltsetA">
+            <option value="ems_composers" selected="selected">Early Music Show</option>
+            <option value="slickmem_persons">SLICKMEM Persons</option>
+            <option value="slickmem_item_creators">SLICKMEM Item Creators</option>
+        </select>
+        Right side:
+        <select id="rightDataSelector" name="saltsetB">
+            <option value="ems_composers">Early Music Show</option>
+            <option value="slickmem_persons" selected="selected">SLICKMEM Persons</option>
+            <option value="slickmem_item_creators">SLICKMEM Item Creators</option>
+        </select>
+        <input type="submit" value="Compare">
+    </form>
 </div>

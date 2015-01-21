@@ -1,5 +1,5 @@
 #from app import app
-from flask import Flask, render_template, Markup
+from flask import Flask, render_template, Markup, request
 from flask.ext.socketio import SocketIO, emit
 import sys
 from pprint import pprint
@@ -55,11 +55,12 @@ def dump():
     
 
 
-@app.route('/instance')
-@app.route('/salt')
+@app.route('/instance', methods=["GET"])
+@app.route('/salt', methods=["GET"])
 def instance():
-    saltsetA = "http://127.0.0.1:8890/saltsets/slickmem_item_creators"
-    saltsetB = "http://127.0.0.1:8890/saltsets/slickmem_persons"
+    saltsetA = "http://127.0.0.1:8890/saltsets/" + request.args['saltsetA']
+    saltsetB = "http://127.0.0.1:8890/saltsets/" + request.args['saltsetB']
+    print saltsetA
     # First grab all inter-saltset instance pairings with their scores for all matching algorithms
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     qS =  """
@@ -188,6 +189,7 @@ def sanitize(message) :
 
 if __name__ == '__main__':
     socketio.run(app)
+    app.debug = True
 
 
 

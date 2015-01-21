@@ -1,8 +1,8 @@
 SELECT DISTINCT ?uri ?label
 WHERE { 
     GRAPH <http://127.0.0.1:8890/slickmem> {
-        ?uri  a  foaf:Person ;
-            rdfs:label ?label .
+        ?uri rdfs:label ?label ;
+            <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/slickmem_persons> .
 
     }
 }

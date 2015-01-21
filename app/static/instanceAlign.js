@@ -8,6 +8,20 @@ var DELAY = 250, clicks = 0, timer = null;
 // websocket variable (initialized in $(document).ready
 var socket
 
+
+
+function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
+function populateSaltsetIndicators() { 
+    $("#saltsetA").html(getParameterByName("saltsetA"));
+    $("#saltsetB").html(getParameterByName("saltsetB"));
+}
+
 function handleHighlights() {
     var mA = $('#modeSelector').val();
     // if we are in a mode that requires highlighting:
@@ -216,9 +230,9 @@ function refreshLists() {
         }
         // 3. Populate the left and right list with the IDs and names from the fuzz object
         newLeftHTML += '<div class="scrollitem'+altString+'" id="' + fuzz[mA][match]["lefturi"] + 
-                        '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
+                        '" title="' + fuzz[mA][match]["lefturi"] + '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
         newRightHTML += '<div class="scrollitem'+altString+'"+ id="' + fuzz[mA][match]["righturi"] + 
-                        '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
+                        '" title="' + fuzz[mA][match]["righturi"] + '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
         if(mode === "displayDecisions") {
             newScoresHTML += '<div class="scrollitem'+altString+'" title="'+ fuzz[mA][match]["reason"] + '">' + fuzz[mA][match]["reason"] + '&nbsp;</div>\n';
         } else {
@@ -286,7 +300,7 @@ function modalAdjust() {
 
 $(document).ready(function() { 
     // initialize stuff
-    handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
+    populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
 
     // set up websocket
    socket=io.connect('http://' + document.domain + ':' + location.port); 
