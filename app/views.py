@@ -14,6 +14,10 @@ socketio = SocketIO(app)
 @app.route('/')
 @app.route('/index')
 def index():
+    return render_template("index.html")
+
+@app.route('/dump')
+def dump():
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setQuery("""
         PREFIX : <http://127.0.0.1:8890/>
@@ -47,8 +51,9 @@ def index():
 
     results = { 'nrow' : len(results["results"]["bindings"]),
                 'prettyprint' : output }
-    return render_template('index.html', results=results)
+    return render_template('dump.html', results=results)
     
+
 
 @app.route('/instance')
 @app.route('/salt')
@@ -64,9 +69,11 @@ def instance():
             ?mtc :matchAlgorithm ?ma ;
                  :matchScore ?score .
             ?ems :matchParticipant ?mtc ;
-                 dc:contributor ?emsname .
+                 dc:contributor ?emsname ;
+                 <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/ems_composers> .
             ?slick :matchParticipant ?mtc ;
-                 rdfs:label ?slickname .
+                 rdfs:label ?slickname ;
+                 <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/slickmem_persons> .
          } 
         ORDER BY DESC(?score) ?emsname ?slickname
     """)

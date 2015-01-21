@@ -1,0 +1,7 @@
+SELECT DISTINCT ?uri ?label
+WHERE { 
+    GRAPH <http://127.0.0.1:8890/EMS> {
+        ?uri <http://127.0.0.1:3000/contributorRole> "Composer" ;
+           <http://purl.org/dc/elements/1.1/contributor> ?label .
+    }
+}

@@ -1,0 +1,13 @@
+
+INSERT { 
+    graph <http://127.0.0.1:8890/slickmem> { 
+        ?uri <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/slickmem_persons> .
+    }
+}
+WHERE { 
+    GRAPH <http://127.0.0.1:8890/slickmem> {
+        ?uri  a  foaf:Person ;
+            rdfs:label ?label .
+    }
+}
+
