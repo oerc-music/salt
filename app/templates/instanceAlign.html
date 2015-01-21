@@ -3,7 +3,10 @@
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='jquery-2.1.3.min.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='instanceAlign.js') }}"></script>
-        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='instanceAlign.css') }}"></style>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='instanceAlign.css') }}">
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+
         <style>
             .matchReference { 
                 cursor: url({{ url_for('static', filename='undo.png') }}), not-allowed;
@@ -79,10 +82,10 @@
                              {% for result in results[mode] %}
                              {{innerDelim}}{
                                 "matchuri": "{{ result["matchuri"]|safe }}",
-                                "lefturi": "{{ result["emsuri"]|safe }}",
-                                "leftlabel": "{{ result["emsname"]|safe }}",
-                                "righturi": "{{ result["slickuri"]|safe }}",
-                                "rightlabel": "{{ result["slickname"]|safe }}",
+                                "lefturi": "{{ result["saltAuri"]|safe }}",
+                                "leftlabel": "{{ result["saltAname"]|safe }}",
+                                "righturi": "{{ result["saltBuri"]|safe }}",
+                                "rightlabel": "{{ result["saltBname"]|safe }}",
                                 "reason": "{{ result["reason"]|safe }}"
                              }
                              {% set innerDelim = "," %}
@@ -91,10 +94,10 @@
                              {% for result in results[mode] %}
                              {{innerDelim}}{
                                 "matchuri": "{{ result["matchuri"]|safe }}",
-                                "lefturi": "{{ result["emsuri"]|safe }}",
-                                "leftlabel": "{{ result["emsname"]|safe }}",
-                                "righturi": "{{ result["slickuri"]|safe }}",
-                                "rightlabel": "{{ result["slickname"]|safe }}",
+                                "lefturi": "{{ result["saltAuri"]|safe }}",
+                                "leftlabel": "{{ result["saltAname"]|safe }}",
+                                "righturi": "{{ result["saltBuri"]|safe }}",
+                                "rightlabel": "{{ result["saltBname"]|safe }}",
                                 "score": "{{ result["score"]|safe }}"
                              }
                              {% set innerDelim = "," %}

@@ -23,25 +23,25 @@ def dump():
         PREFIX : <http://127.0.0.1:8890/>
         PREFIX ma: <http://127.0.0.1:8890/matchAlgorithm/>
         PREFIX dc: <http://purl.org/dc/elements/1.1/>
-        SELECT DISTINCT ?emsname ?slickname ?score ?ma
+        SELECT DISTINCT ?saltAname ?saltBname ?score ?ma
         WHERE { 
             ?mtc a :fuzzyMatch ;
                  :matchAlgorithm ?ma ;
                  :matchScore ?score .
-            ?ems :matchParticipant ?mtc ;
-                 dc:contributor ?emsname .
-            ?slick :matchParticipant ?mtc ;
-                 rdfs:label ?slickname .
+            ?saltA :matchParticipant ?mtc ;
+                 rdfs:label ?saltAname .
+            ?saltB :matchParticipant ?mtc ;
+                 rdfs:label ?saltBname .
          }
     """)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
     pprint(results)
-    output = "<table><tr><td>EMS Name</td><td>SLICKMEM Name</td><td>Score</td><td>Algorithm</td></tr>"
+    output = "<table><tr><td>Salt A Name</td><td>Salt B Name</td><td>Score</td><td>Algorithm</td></tr>"
     for result in results["results"]["bindings"]:
         output += "<tr>"
-        output += "<td>" + result["emsname"]["value"] + "</td>"
-        output += "<td>" + result["slickname"]["value"] + "</td>"
+        output += "<td>" + result["saltAname"]["value"] + "</td>"
+        output += "<td>" + result["saltBname"]["value"] + "</td>"
         output += "<td>" + result["score"]["value"] + "</td>"
         output += "<td>" + result["ma"]["value"] + "</td>"
         output += "</tr>"
@@ -58,43 +58,49 @@ def dump():
 @app.route('/instance')
 @app.route('/salt')
 def instance():
-    # First grab all EMS - SLICK stringmatch pairings with their scores for all matching algorithms
+    saltsetA = "http://127.0.0.1:8890/saltsets/slickmem_item_creators"
+    saltsetB = "http://127.0.0.1:8890/saltsets/slickmem_persons"
+    # First grab all inter-saltset instance pairings with their scores for all matching algorithms
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
-    sparql.setQuery("""
+    qS =  """
         PREFIX : <http://127.0.0.1:8890/>
         PREFIX ma: <http://127.0.0.1:8890/matchAlgorithm/>
         PREFIX dc: <http://purl.org/dc/elements/1.1/>
-        SELECT DISTINCT ?mtc ?ems ?emsname ?slick ?slickname ?score ?ma
-        WHERE { 
+        SELECT DISTINCT ?mtc ?saltA ?saltAname ?saltB ?saltBname ?score ?ma
+        WHERE {{ 
             ?mtc :matchAlgorithm ?ma ;
                  :matchScore ?score .
-            ?ems :matchParticipant ?mtc ;
-                 dc:contributor ?emsname ;
-                 <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/ems_composers> .
-            ?slick :matchParticipant ?mtc ;
-                 rdfs:label ?slickname ;
-                 <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/slickmem_persons> .
-         } 
-        ORDER BY DESC(?score) ?emsname ?slickname
-    """)
+            ?saltA :matchParticipant ?mtc ;
+                 rdfs:label ?saltAname ;
+                 <http://127.0.0.1:8890/salt/in_salt_set> <{0}> .
+            ?saltB :matchParticipant ?mtc ;
+                 rdfs:label ?saltBname ;
+                 <http://127.0.0.1:8890/salt/in_salt_set> <{1}> .
+         }}
+        ORDER BY DESC(?score) ?saltAname ?saltBname """
+    queryString = qS.format(saltsetA, saltsetB)
+    sparql.setQuery(queryString)
     sparql.setReturnFormat(JSON)
     stringMatchResults = sparql.query().convert()
 
     # Now grab any match decisions (confirmations/disputations) established in previous sessions
-    sparql.setQuery("""
+    qS = """
     PREFIX : <http://127.0.0.1:8890/>
-    SELECT DISTINCT ?matchuri ?emsuri ?emsname ?slickuri ?slickname ?decision ?reason 
-    WHERE {
+    SELECT DISTINCT ?matchuri ?saltAuri ?saltAname ?saltBuri ?saltBname ?decision ?reason 
+    WHERE {{
         ?matchuri a :matchDecision ;
                   :matchDecisionStatus ?decision ;
                   :matchDecisionReason ?reason .
-        ?emsuri :matchParticipant ?matchuri ;
-                dc:contributor ?emsname .
-        ?slickuri :matchParticipant ?matchuri ;
-                rdfs:label ?slickname .
-    }
-    ORDER BY ?emsname ?slickname
-    """)
+        ?saltAuri :matchParticipant ?matchuri ;
+                  <http://127.0.0.1:8890/salt/in_salt_set> <{0}> ;
+                  rdfs:label ?saltAname .
+        ?saltBuri :matchParticipant ?matchuri ;
+                  <http://127.0.0.1:8890/salt/in_salt_set> <{1}> ;
+                  rdfs:label ?saltBname .
+    }}
+    ORDER BY ?saltAname ?saltBname """
+    queryString = qS.format(saltsetA, saltsetB)
+    sparql.setQuery(queryString)
     matchDecisions = sparql.query().convert()
 
     # Parse all results into a nice data structure to send to the template:
@@ -105,10 +111,10 @@ def instance():
 
     for result in stringMatchResults["results"]["bindings"]:
         thisResult = { "matchuri": result["mtc"]["value"],
-                      "emsuri": result["ems"]["value"],
-                      "emsname": result["emsname"]["value"],
-                      "slickuri": result["slick"]["value"],
-                      "slickname": result["slickname"]["value"],
+                      "saltAuri": result["saltA"]["value"],
+                      "saltAname": result["saltAname"]["value"],
+                      "saltBuri": result["saltB"]["value"],
+                      "saltBname": result["saltBname"]["value"],
                       "score": result["score"]["value"]}
         if result["ma"]["value"] in toTemplate:
             toTemplate[result["ma"]["value"]].append(thisResult)
@@ -119,10 +125,10 @@ def instance():
         thisResult = {"matchuri": result["matchuri"]["value"],
                       "decision": result["decision"]["value"],
                       "reason": result["reason"]["value"],
-                      "emsuri": result["emsuri"]["value"],
-                      "emsname": result["emsname"]["value"],
-                      "slickuri": result["slickuri"]["value"],
-                      "slickname": result["slickname"]["value"]}
+                      "saltAuri": result["saltAuri"]["value"],
+                      "saltAname": result["saltAname"]["value"],
+                      "saltBuri": result["saltBuri"]["value"],
+                      "saltBname": result["saltBname"]["value"]}
         if result["decision"]["value"] in toTemplate:
             toTemplate[result["decision"]["value"]].append(thisResult)
         else: 
