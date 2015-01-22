@@ -77,6 +77,7 @@ def instance():
             ?saltB :matchParticipant ?mtc ;
                  rdfs:label ?saltBname ;
                  <http://127.0.0.1:8890/salt/in_salt_set> <{1}> .
+            FILTER(?saltA != ?saltB)
          }}
         ORDER BY DESC(?score) ?saltAname ?saltBname """
     queryString = qS.format(saltsetA, saltsetB)

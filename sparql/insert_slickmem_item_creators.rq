@@ -12,5 +12,9 @@ WHERE {
  ?workuri a mo:MusicalWork ;
           dct:title ?worktitle;
           frbr:creator ?creatorname .
- BIND(IRI(CONCAT(STR(?workuri), "_creator")) as ?creatoruri) .
+          BIND(IRI(CONCAT(STR(?workuri), "_creator")) as ?creatoruri) .
+#Alternative to use the last part of the work URI as a creator URI:
+#BIND(IRI(CONCAT("http://127.0.0.1:8890/slickmem_item_creators/", strafter(strafter(strafter(strafter(strafter(strafter(str(?workuri), "//"), "/"), "/"), "/"), "/"), "/"))) as ?creatoruri)
+  # This strafter business is clearly horrendous; investigate xpf:local-name instead: http://docs.openlinksw.com/virtuoso/xpf_local_name.html
 }
+

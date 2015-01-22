@@ -4,6 +4,10 @@
     font-family:sans-serif;
 }
 
+#displayWrapper #left, #displayWrapper #right, #displayWrapper #scores {
+    white-space:nowrap;
+}
+
 #listWrapper { 
     overflow:hidden;
 }
@@ -15,6 +19,8 @@
 
 #saltsets a { 
     text-decoration:none;
+    background:#ffdddd;
+    color:#000000;
 }
 
 #saltsets #saltsetA { 
@@ -63,7 +69,6 @@
     min-height:400px;
     background: #ffdddd;
     overflow:hidden;
-    white-space:nowrap;
     position:relative;
 }
 
