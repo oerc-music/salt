@@ -31,6 +31,10 @@
     background:#ddddff;
 }
 
+#saltsets span { 
+    font-family:sans-serif;
+}
+
 #left { 
     min-height:400px;
     max-height:400px;
@@ -81,7 +85,8 @@
 }
 
 .scrollable { 
-    overflow:auto;
+    overflow-y:auto;
+    overflow-x:hidden;
 }
 
 .scrollitem {
@@ -138,11 +143,13 @@
 #leftSelected { 
     float:left;
     color:#339933;
+    width:300px;
 }
 
 #rightSelected { 
     position:absolute;
     left:31.5%;
+    width:300px;
     color:#333399;
 }
 
@@ -177,3 +184,18 @@
     text-decoration:underline;
 }
 
+#leftContext {
+   clear:both;
+   margin-top:80px;
+   background:#ddffdd;
+}
+#rightContext {
+   clear:both;
+   margin-top:6px;
+   background:#ddddff;
+}
+
+
+#contextWrapper { 
+    font-family: sans-serif;
+}

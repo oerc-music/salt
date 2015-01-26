@@ -14,7 +14,7 @@ def main():
 
     queryResults = dict()
 
-    threshold = 70 #have to match or beat this score for inclusion in the results
+    threshold = 80 #have to match or beat this score for inclusion in the results
 
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setReturnFormat(JSON)

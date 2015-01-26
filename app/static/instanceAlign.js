@@ -39,11 +39,11 @@ function handleHighlights() {
 }
 
 function handleHighlight(leftright) {
-   // On a single click, we want to invoke the highlight logic
-   // On a double click, we want to invoke the loadMatchesForSelected logic
-   // i.e. we want to load only those labels (in the other list) that match the dblclicked label 
-   // To differentiate between single and double click on the same element, we have to be slightly
-   // hacky. See here: https://stackoverflow.com/questions/6330431/jquery-bind-double-click-and-single-click-separately
+    // On a single click, we want to invoke the highlight logic
+    // On a double click, we want to invoke the loadMatchesForSelected logic
+    // i.e. we want to load only those labels (in the other list) that match the dblclicked label 
+    // To differentiate between single and double click on the same element, we have to be slightly
+    // hacky. See here: https://stackoverflow.com/questions/6330431/jquery-bind-double-click-and-single-click-separately
     $('#'+leftright+' .scrollitem').click(function() {
         var thisElement = $(this);
         clicks++; // count clicks
@@ -55,6 +55,9 @@ function handleHighlight(leftright) {
                 } else {
                     $('#'+leftright+' .scrollitem').removeClass(leftright+'Highlight');
                     thisElement.addClass(leftright+'Highlight');
+                    // call server for context
+                    var saltset = (leftright === "left") ? getParameterByName("saltsetA") : getParameterByName("saltsetB");
+                    socket.emit('contextRequest', {saltset:saltset, uri:thisElement.attr('id'), leftright:leftright});
                 }
                 $('#'+leftright+'Selected').html('');
                 $('#'+leftright+'Selected').html($('.'+leftright+'Highlight').html());
@@ -82,7 +85,7 @@ function handleHighlight(leftright) {
             thisElement.unbind('click');
 
             clearTimeout(timer); // prevent single-click action
-            
+
             // ...and give it a different click behaviour (dbl-click to exit match
             // reference mode, i.e. return to full lists on both sides)
             thisElement.click(function() { refreshLists() });
@@ -103,42 +106,42 @@ function handleHighlight(leftright) {
 
 function handleConfirmDispute() { 
     $('#confirmPanel i').click(function() { 
-            var confStatus;
-            var confMsg
-            if ($(this).hasClass("fa-thumbs-up")) {
-                confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
-                confMsg = "Confirm match: ";
+        var confStatus;
+        var confMsg
+        if ($(this).hasClass("fa-thumbs-up")) {
+            confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
+            confMsg = "Confirm match: ";
 
-            }
-            else { 
-                confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
-                confMsg = "Dispute match: ";
-            }
+        }
+        else { 
+            confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
+            confMsg = "Dispute match: ";
+        }
 
 
-            var confReason = prompt(confMsg + $('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
-            if(confReason != null) { 
-                // generate the aligned uri (based on left uri + right uri)
-                var lefturi = $('.leftHighlight').attr("id");
-                var righturi = $('.rightHighlight').attr("id");
-                var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
-                // remember this decision locally
-                var thisMatch = {
-                                    matchuri: aligneduri, 
-                                    lefturi: lefturi, 
-                                    righturi:righturi, 
-                                    leftlabel:$('#leftSelected').html(), 
-                                    rightlabel:$('#rightSelected').html(), 
-                                    reason:confReason
-                                };
-                if(fuzz[confStatus] !== undefined) { 
-                    fuzz[confStatus].push(thisMatch);
-                } else { 
-                    fuzz[confStatus] = [thisMatch];
-                }
-                // and send this decision to the server, for persistent storage
-                socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
-            }
+    var confReason = prompt(confMsg + $('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
+    if(confReason != null) { 
+        // generate the aligned uri (based on left uri + right uri)
+        var lefturi = $('.leftHighlight').attr("id");
+        var righturi = $('.rightHighlight').attr("id");
+        var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+        // remember this decision locally
+        var thisMatch = {
+            matchuri: aligneduri, 
+            lefturi: lefturi, 
+            righturi:righturi, 
+            leftlabel:$('#leftSelected').html(), 
+            rightlabel:$('#rightSelected').html(), 
+            reason:confReason
+        };
+        if(fuzz[confStatus] !== undefined) { 
+            fuzz[confStatus].push(thisMatch);
+        } else { 
+            fuzz[confStatus] = [thisMatch];
+        }
+        // and send this decision to the server, for persistent storage
+        socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
+    }
 
     });
 }
@@ -153,15 +156,15 @@ function handleScoreDisplay() {
         var mA = $("#modeSelector").val();
         for(var match in fuzz[mA])  {
             if(fuzz[mA][match]["leftlabel"] === leftSel && 
-               fuzz[mA][match]["rightlabel"] === rightSel) { 
-               console.log(mA)
-               if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
-                   $('#selectedScore').html(fuzz[mA][match]["reason"])
-               } else { 
-                $('#selectedScore').html(fuzz[mA][match]["score"]);
-               }
-               break;
-            }
+                    fuzz[mA][match]["rightlabel"] === rightSel) { 
+                        console.log(mA)
+                            if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
+                                $('#selectedScore').html(fuzz[mA][match]["reason"])
+                            } else { 
+                                $('#selectedScore').html(fuzz[mA][match]["score"]);
+                            }
+                        break;
+                    }
         }
     }
 }
@@ -178,19 +181,19 @@ function handleLocks() {
 }
 
 function handleScrolling() { 
-        $('.scrollable').on('scroll', function() { 
-            if($('#lockcentre').hasClass("lockActive")) {
-                //need to synchronize scrolling across both lists
-                var top = $(this).scrollTop();
-                $('.scrollable').scrollTop(top);
-            }
-        });
+    $('.scrollable').on('scroll', function() { 
+        if($('#lockcentre').hasClass("lockActive")) {
+            //need to synchronize scrolling across both lists
+            var top = $(this).scrollTop();
+            $('.scrollable').scrollTop(top);
+        }
+    });
 }
 
 function scrollLock(leftright) {
-   // set the scroll location of leftright to that of the reference (i.e. the other one)
-   var reference = (leftright === "left") ? "right" : "left";
-   $('#' + leftright).scrollTop($('#' + reference).scrollTop());
+    // set the scroll location of leftright to that of the reference (i.e. the other one)
+    var reference = (leftright === "left") ? "right" : "left";
+    $('#' + leftright).scrollTop($('#' + reference).scrollTop());
 }
 
 function refreshLists() {
@@ -229,10 +232,14 @@ function refreshLists() {
             altString = "";
         }
         // 3. Populate the left and right list with the IDs and names from the fuzz object
-        newLeftHTML += '<div class="scrollitem'+altString+'" id="' + fuzz[mA][match]["lefturi"] + 
-                        '" title="' + fuzz[mA][match]["lefturi"] + '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
-        newRightHTML += '<div class="scrollitem'+altString+'"+ id="' + fuzz[mA][match]["righturi"] + 
-                        '" title="' + fuzz[mA][match]["righturi"] + '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
+        if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') { 
+            newLeftHTML += '<div class="scrollitem'+altString+'" id="' + fuzz[mA][match]["lefturi"] + 
+                '" title="' + fuzz[mA][match]["lefturi"] + '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
+        }
+        if(typeof fuzz[mA][match]["righturi"] !== 'undefined') { 
+            newRightHTML += '<div class="scrollitem'+altString+'"+ id="' + fuzz[mA][match]["righturi"] + 
+                '" title="' + fuzz[mA][match]["righturi"] + '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
+        }
         if(mode === "displayDecisions") {
             newScoresHTML += '<div class="scrollitem'+altString+'" title="'+ fuzz[mA][match]["reason"] + '">' + fuzz[mA][match]["reason"] + '&nbsp;</div>\n';
         } else {
@@ -250,10 +257,10 @@ function loadMatchesForSelected(leftright, selected) {
     // user has double clicked on a name (on the left or right)
     // populate the left/rightSelected div appropriately
     $('#' + leftright +'Selected').html(selected.html())
-    $('#' + target + 'Selected').html("")
-    $('#selectedScore').html("")
-    // load up all matches to that name on the other list
-    var mA = $("#modeSelector").val();
+        $('#' + target + 'Selected').html("")
+        $('#selectedScore').html("")
+        // load up all matches to that name on the other list
+        var mA = $("#modeSelector").val();
     var sourceList = $("#" + leftright);
     var targetList = $("#" + target);
     var scoresList = $("#scores");
@@ -265,7 +272,7 @@ function loadMatchesForSelected(leftright, selected) {
         // re-populate target list with items matching dblclicked name 
         if(fuzz[mA][match][leftright+"label"] === selected.html()) {
             newTargetHTML += '<div class="scrollitem" id="' + fuzz[mA][match][target+"uri"] + 
-                            '">' + fuzz[mA][match][target+"label"] + '</div>\n';
+                '">' + fuzz[mA][match][target+"label"] + '</div>\n';
             newScoresHTML += '<div class="scrollitem">' + fuzz[mA][match]["score"] + '</div>\n';
         }
     }
@@ -279,22 +286,34 @@ function loadMatchesForSelected(leftright, selected) {
 }
 
 function modalAdjust() {  
-   // Adjust width of score/reason column, and decide whether lock controls / confirmation panel should be visible, depending on mode
-   var mA = $('#modeSelector').val();
-   if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {  
+    // Adjust width of score/reason column, and decide whether lock controls / confirmation panel should be visible, depending on mode
+    // (matching mode, or review mode, i.e. view confirmations / disputations)
+    var mA = $('#modeSelector').val();
+    if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {  
         $('#scores').css("width", "370px");
+        $('#scores').css("display", "block");
         $('.lockcontrols').css('visibility', 'hidden');
         $('#confirmPanel').css('visibility', 'hidden');
         // always lock scrolling in display-decisions mode
         if(!($('#lockcentre').hasClass('lockActive'))) { 
             handleLocks();
         }
-   }
-   else { 
-       $('#scores').css("width", "50px");
-       $('.lockcontrols').css('visibility', 'visible');
-       // don't reveal confirm panel since it should only show after user selects an item on each side
-   }
+    }
+    else if (mA === "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
+        // no scores to display on an unmatched simple listing...
+        $('#scores').css("display", "none");
+        // since the lists aren't matched, locked scrolling makes no sense in this mode
+        $('.lockcontrols').css('visibility', 'hidden');
+        if($('#lockcentre').hasClass('lockActive')) { 
+            handleLocks();
+        }
+    }
+    else { 
+        $('#scores').css("width", "50px");
+        $('#scores').css("display", "block");
+        $('.lockcontrols').css('visibility', 'visible');
+        // don't reveal confirm panel since it should only show after user selects an item on each side
+    }
 
 }
 
@@ -303,14 +322,40 @@ $(document).ready(function() {
     populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
 
     // set up websocket
-   socket=io.connect('http://' + document.domain + ':' + location.port); 
-   socket.on('connect', function() { 
-       socket.emit('clientConnectionEvent', 'Client connected.');
-       console.log("Connected to server");
-   });
+    socket=io.connect('http://' + document.domain + ':' + location.port); 
+    socket.on('connect', function() { 
+        socket.emit('clientConnectionEvent', 'Client connected.');
+        console.log("Connected to server");
+    });
 
-    // set up websocket handlers
-   socket.on('confirmDisputeHandled', function(msg) {
-       console.log("Server handled: ", msg)
-   })
+// set up websocket handlers
+socket.on('confirmDisputeHandled', function(msg) {
+
+})
+
+socket.on('contextRequestHandled', function(msg) { 
+    console.log("Context request handled: ", msg);
+    var contextElement = $("#" + msg["leftright"]  + "Context");
+    var newContextHTML = ""
+    // create divs for each type of variable
+    for (var i = 0; i < msg["results"]["variables"].length; i++) { 
+        newContextHTML += '<div class="contextVar" id="' + msg["results"]["variables"][i] + '">' + '</div>\n';
+    }
+console.log("Attempting to set context element html to " + newContextHTML);
+contextElement.html(newContextHTML);
+console.log(contextElement)
+    // populate the divs
+    for (var i = 0; i < msg["results"]["bindings"].length; i++) { 
+        console.log("i: " + i);
+        for (var j = 0; j < msg["results"]["variables"].length; j++) { 
+            var varName =  msg["results"]["variables"][j];
+            console.log("Using " + varName);
+            console.log("Object: " +$(".contextVar." + varName));
+            var prevContent = $("#" + msg["leftright"] + "Context .contextVar#" + varName).html();
+            var newContent = '<div class="contextItem">' + msg["results"]["bindings"][i][varName]["value"] + "</div>";
+            $("#" + msg["leftright"] + "Context  .contextVar#" + varName).html(prevContent + newContent);
+
+        }
+    }
+})
 });

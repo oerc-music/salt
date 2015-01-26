@@ -60,9 +60,30 @@ def dump():
 def instance():
     saltsetA = "http://127.0.0.1:8890/saltsets/" + request.args['saltsetA']
     saltsetB = "http://127.0.0.1:8890/saltsets/" + request.args['saltsetB']
-    print saltsetA
-    # First grab all inter-saltset instance pairings with their scores for all matching algorithms
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+    # First grab a list of all items in the two saltsets
+    qS =  """
+        PREFIX salt: <http://127.0.0.1:8890/salt/>
+        PREFIX saltset: <http://127.0.0.1:8890/saltsets/>
+        select ?label ?uri ?saltset
+        where {{ 
+            {{
+               ?uri salt:in_salt_set <{0}>;
+                    salt:in_salt_set ?saltset ;
+                    rdfs:label ?label .
+            }} UNION {{
+               ?uri salt:in_salt_set <{1}>;
+                    salt:in_salt_set ?saltset ;
+                    rdfs:label ?label .
+            }}
+        }}
+        ORDER BY ?saltset ?label """
+    queryString = qS.format(saltsetA, saltsetB)
+    sparql.setQuery(queryString) 
+    sparql.setReturnFormat(JSON)
+    simpleList = sparql.query().convert()
+
+    #Then grab all inter-saltset instance pairings with their scores for all matching algorithms
     qS =  """
         PREFIX : <http://127.0.0.1:8890/>
         PREFIX ma: <http://127.0.0.1:8890/matchAlgorithm/>
@@ -77,12 +98,11 @@ def instance():
             ?saltB :matchParticipant ?mtc ;
                  rdfs:label ?saltBname ;
                  <http://127.0.0.1:8890/salt/in_salt_set> <{1}> .
-            FILTER(?saltA != ?saltB)
+            #FILTER(?saltA != ?saltB)
          }}
         ORDER BY DESC(?score) ?saltAname ?saltBname """
     queryString = qS.format(saltsetA, saltsetB)
     sparql.setQuery(queryString)
-    sparql.setReturnFormat(JSON)
     stringMatchResults = sparql.query().convert()
 
     # Now grab any match decisions (confirmations/disputations) established in previous sessions
@@ -106,10 +126,19 @@ def instance():
     matchDecisions = sparql.query().convert()
 
     # Parse all results into a nice data structure to send to the template:
-    # A dict containing keys for each mode (match algorithm or decision status)
+    # A dict containing keys for each mode (simple list, match algorithm or decision status)
     # Each has a value that is a list of dicts,
-    # one dict (list item) per match
+    # one dict (list item) per item / match
     toTemplate = dict()
+    sl = "http://127.0.0.1:8890/matchAlgorithm/simpleList"
+    for result in simpleList["results"]["bindings"]:
+        thisResult = { "uri": result["uri"]["value"],
+                       "label": result["label"]["value"],
+                       "saltset": result["saltset"]["value"]}
+        if sl not in toTemplate:
+            toTemplate[sl] = [thisResult]
+        else:
+            toTemplate[sl].append(thisResult)
 
     for result in stringMatchResults["results"]["bindings"]:
         thisResult = { "matchuri": result["mtc"]["value"],
@@ -135,7 +164,6 @@ def instance():
             toTemplate[result["decision"]["value"]].append(thisResult)
         else: 
             toTemplate[result["decision"]["value"]] = [thisResult]
-            
     return render_template('instanceAlign.html', results = toTemplate)
 
 
@@ -146,8 +174,18 @@ def socket_message(message):
 
 @socketio.on('clientConnectionEvent')
 def socket_connect(message):
-    print(message);
+    print(message)
 
+@socketio.on('contextRequest')
+def socket_context_request(message):
+    try: 
+        response = dict()
+        response["leftright"] = message["leftright"]
+        response["results"] = handleContextRequest(message)
+        emit('contextRequestHandled', response);
+        print "Context request handled!"
+    except:
+        emit('contextRequestFailed')
 
 def storeConfirmDispute(message):
     message = sanitize(message)
@@ -179,6 +217,22 @@ def storeConfirmDispute(message):
         print "Something important is missing in the message:"
         pprint(message)
 
+def handleContextRequest(message)  :
+    try:
+        contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
+        contextQuery = contextQuery.format("<" + message["uri"] + ">");
+        print contextQuery
+        sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+        sparql.setReturnFormat(JSON)
+        sparql.setQuery(contextQuery)
+        outcome = sparql.query().convert()
+        pprint(outcome["results"]["bindings"])
+        results = dict()
+        results["variables"] = outcome["head"]["vars"]
+        results["bindings"] = outcome["results"]["bindings"]
+        return(results);
+    except: 
+        raise
 
 def sanitize(message) : 
     # sanitize user input
