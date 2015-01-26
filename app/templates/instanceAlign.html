@@ -20,7 +20,6 @@
             <a href="/"><i class="fa fa-arrow-circle-left"></i> Return to saltset selection screen.</a> Currently comparing <span id="saltsetA"> </span> and <span id="saltsetB"> </span>.         
         </div>
         <div class="algselector">
-            Please select mode: 
             <select id="modeSelector" onChange="refreshLists()">
                 <option value="http://127.0.0.1:8890/matchAlgorithm/confirmedMatch">Confirmed by you</option>
                 <option value="http://127.0.0.1:8890/matchAlgorithm/disputedMatch">Disputed by you</option>
@@ -31,6 +30,16 @@
                 <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_partial-ratio">Partial ratio</option>
                 <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_simple-ratio">Simple ratio</option>
             </select>
+        </div>
+        <div id="search">
+            <input type="text" name="searchbox" id="searchbox"/>
+            <span type="button" id="dosearch" onclick="refreshLists()">
+               <i class="fa fa-search"></i> 
+               Search
+            </span>
+            <input type="radio" name="searchmode" value="Left">Left
+            <input type="radio" name="searchmode" value="Right">Right
+            <input type="radio" name="searchmode" checked="checked" value="Both">Both
         </div>
         <div class="lockcontrols">
             <span class="lock lockActive" id="lockright" onClick="if($('#lockright').hasClass('lockActive')) { 

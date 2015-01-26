@@ -197,6 +197,13 @@ function scrollLock(leftright) {
 }
 
 function refreshLists() {
+    // -1. Store the search string as a regex if it exists
+    var searchString = $("#searchbox").val();
+    var searchRE;
+    if(searchString !== "") {
+        searchRE = new RegExp(searchString);
+    }
+    var searchMode = $('#search input[type="radio"]:checked').val();
     // 0. Get rid of any previous selections...
     $('#leftSelected').html('');
     $('#rightSelected').html('');
@@ -206,9 +213,15 @@ function refreshLists() {
     modalAdjust();
     // 1. Get the match algorithm (mode) from the selection list
     var mA = $("#modeSelector").val();
-    var mode = "match";
+    var mode;
     if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {
         mode = "displayDecisions";
+    }
+    else if (mA == "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
+        mode = "simpleList";
+    }
+    else { 
+        mode = "match";
     }
     // 2. Grab the lists (so we don't have to keep searching the DOM every time):
     var leftList = $("#left");
@@ -232,14 +245,27 @@ function refreshLists() {
             altString = "";
         }
         // 3. Populate the left and right list with the IDs and names from the fuzz object
-        if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') { 
-            newLeftHTML += '<div class="scrollitem'+ altString + 
-                '" title="' + fuzz[mA][match]["lefturi"] + '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
+        // Only include if no search is specified, or the search is being performed on
+        // the other side (leftright), or the regex matches
+        if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') {
+            if(typeof(searchRE) === "undefined" || searchMode === "Right" || searchRE.test(fuzz[mA][match]["leftlabel"])) { 
+                newLeftHTML += '<div class="scrollitem'+ altString + 
+                    '" title="' + fuzz[mA][match]["lefturi"] + '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
+            } else if(mode !== "simpleList") { 
+                // if we are in any mode where left matches right (i.e. anything but simpleList)...
+                // ...continue on to next match set and print nothing for this one
+                continue;
+            }
         }
         if(typeof fuzz[mA][match]["righturi"] !== 'undefined') { 
-            newRightHTML += '<div class="scrollitem' + altString +
-                '" title="' + fuzz[mA][match]["righturi"] + '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
-        }
+            if(typeof(searchRE) === "undefined" || searchMode === "Left" || searchRE.test(fuzz[mA][match]["rightlabel"])) { 
+                newRightHTML += '<div class="scrollitem' + altString +
+                    '" title="' + fuzz[mA][match]["righturi"] + '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
+            } else if (mode !== "simpleList") { 
+                // see above (for left label)
+               continue;
+            }
+        }   
         if(mode === "displayDecisions") {
             newScoresHTML += '<div class="scrollitem'+altString+'" title="'+ fuzz[mA][match]["reason"] + '">' + fuzz[mA][match]["reason"] + '&nbsp;</div>\n';
         } else {
@@ -325,6 +351,18 @@ $(document).ready(function() {
     // initialize stuff
     populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
 
+    // listen to search radio buttons:
+    $('#search input[type="radio"]').change( function(){
+        var searchMode = $('#search input[type="radio"]:checked').val();
+        if(searchMode === "Left") { 
+            $('#search span').css({"background": "#ddffdd", "border-color":"#006600"});
+        } else if(searchMode === "Right") {
+            $('#search span').css({"background": "#ddddff", "border-color":"#000066"});
+        } else { 
+            $('#search span').css({"background": "#ffffff", "border-color":"#000000"});
+        }
+    });
+
     // set up websocket
     socket=io.connect('http://' + document.domain + ':' + location.port); 
     socket.on('connect', function() { 
@@ -332,34 +370,33 @@ $(document).ready(function() {
         console.log("Connected to server");
     });
 
-// set up websocket handlers
-socket.on('confirmDisputeHandled', function(msg) {
+    // set up websocket handlers
+    socket.on('confirmDisputeHandled', function(msg) {
+    })
 
-})
-
-socket.on('contextRequestHandled', function(msg) { 
-    console.log("Context request handled: ", msg);
-    var contextElement = $("#" + msg["leftright"]  + "Context");
-    var newContextHTML = ""
-    // create divs for each type of variable
-    for (var i = 0; i < msg["results"]["variables"].length; i++) { 
-        newContextHTML += '<div class="contextVar" id="' + msg["results"]["variables"][i] + '">' + '</div>\n';
-    }
-console.log("Attempting to set context element html to " + newContextHTML);
-contextElement.html(newContextHTML);
-console.log(contextElement)
-    // populate the divs
-    for (var i = 0; i < msg["results"]["bindings"].length; i++) { 
-        console.log("i: " + i);
-        for (var j = 0; j < msg["results"]["variables"].length; j++) { 
-            var varName =  msg["results"]["variables"][j];
-            console.log("Using " + varName);
-            console.log("Object: " +$(".contextVar." + varName));
-            var prevContent = $("#" + msg["leftright"] + "Context .contextVar#" + varName).html();
-            var newContent = '<div class="contextItem">' + msg["results"]["bindings"][i][varName]["value"] + "</div>";
-            $("#" + msg["leftright"] + "Context  .contextVar#" + varName).html(prevContent + newContent);
-
+    socket.on('contextRequestHandled', function(msg) { 
+        console.log("Context request handled: ", msg);
+        var contextElement = $("#" + msg["leftright"]  + "Context");
+        var newContextHTML = ""
+        // create divs for each type of variable
+        for (var i = 0; i < msg["results"]["variables"].length; i++) { 
+            newContextHTML += '<div class="contextVar" id="' + msg["results"]["variables"][i] + '">' + '</div>\n';
         }
-    }
-})
+    console.log("Attempting to set context element html to " + newContextHTML);
+    contextElement.html(newContextHTML);
+    console.log(contextElement)
+        // populate the divs
+        for (var i = 0; i < msg["results"]["bindings"].length; i++) { 
+            console.log("i: " + i);
+            for (var j = 0; j < msg["results"]["variables"].length; j++) { 
+                var varName =  msg["results"]["variables"][j];
+                console.log("Using " + varName);
+                console.log("Object: " +$(".contextVar." + varName));
+                var prevContent = $("#" + msg["leftright"] + "Context .contextVar#" + varName).html();
+                var newContent = '<div class="contextItem">' + msg["results"]["bindings"][i][varName]["value"] + "</div>";
+                $("#" + msg["leftright"] + "Context  .contextVar#" + varName).html(prevContent + newContent);
+
+            }
+        }
+    })
 });

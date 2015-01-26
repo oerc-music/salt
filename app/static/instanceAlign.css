@@ -199,3 +199,17 @@
 #contextWrapper { 
     font-family: sans-serif;
 }
+
+#modeSelector { 
+    float:left;
+    margin-right:60px;
+}
+
+#search i { 
+    padding:2px;
+}
+
+#dosearch {
+    border:1px solid;
+    cursor:pointer;
+}
