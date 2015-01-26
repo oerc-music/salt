@@ -170,7 +170,7 @@ def instance():
 @socketio.on('confirmDisputeEvent')
 def socket_message(message):
     storeConfirmDispute(message)
-    emit('confirmDisputeHandled', "OK!")
+    emit('confirmDisputeHandled', {"confStatus": message["confStatus"]}) 
 
 @socketio.on('clientConnectionEvent')
 def socket_connect(message):

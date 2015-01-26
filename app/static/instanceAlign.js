@@ -107,44 +107,47 @@ function handleHighlight(leftright) {
 function handleConfirmDispute() { 
     $('#confirmPanel i').click(function() { 
         var confStatus;
-        var confMsg
-        if ($(this).hasClass("fa-thumbs-up")) {
-            confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
-            confMsg = "Confirm match: ";
+        var confMsg;
 
-        }
-        else { 
-            confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
-            confMsg = "Dispute match: ";
-        }
+        var confReason = prompt(confMsg + $('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
+        if(confReason != null) { 
+            // generate the aligned uri (based on left uri + right uri)
+            var lefturi = $('.leftHighlight').attr("title");
+            var righturi = $('.rightHighlight').attr("title");
+            var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+            // remember this decision locally
+            var thisMatch = {
+                matchuri: aligneduri, 
+                lefturi: lefturi, 
+                righturi:righturi, 
+                leftlabel:$('#leftSelected').html(), 
+                rightlabel:$('#rightSelected').html(), 
+                reason:confReason
+            };
+            if(fuzz[confStatus] !== undefined) { 
+                fuzz[confStatus].push(thisMatch);
+            } else { 
+                fuzz[confStatus] = [thisMatch];
+            }
+            // indicate that we're talking to the server and waiting for a response
+            if ($(this).hasClass("fa-thumbs-up")) {
+                confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
+                confMsg = "Confirm match: ";
+                $(this).removeClass("fa-thumbs-up").addClass("fa-refresh fa-spin");
 
-
-    var confReason = prompt(confMsg + $('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
-    if(confReason != null) { 
-        // generate the aligned uri (based on left uri + right uri)
-        var lefturi = $('.leftHighlight').attr("title");
-        var righturi = $('.rightHighlight').attr("title");
-        var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
-        // remember this decision locally
-        var thisMatch = {
-            matchuri: aligneduri, 
-            lefturi: lefturi, 
-            righturi:righturi, 
-            leftlabel:$('#leftSelected').html(), 
-            rightlabel:$('#rightSelected').html(), 
-            reason:confReason
-        };
-        if(fuzz[confStatus] !== undefined) { 
-            fuzz[confStatus].push(thisMatch);
-        } else { 
-            fuzz[confStatus] = [thisMatch];
+            }
+            else { 
+                confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
+                confMsg = "Dispute match: ";
+                $(this).removeClass("fa-thumbs-down").addClass("fa-refresh fa-spin");
+            }
+            // and send this decision to the server, for persistent storage
+            socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
         }
-        // and send this decision to the server, for persistent storage
-        socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
-    }
 
     });
 }
+
 function handleScoreDisplay() { 
     $('#selectedScore').html('');
     // now grab the left and right selected
@@ -157,7 +160,6 @@ function handleScoreDisplay() {
         for(var match in fuzz[mA])  {
             if(fuzz[mA][match]["leftlabel"] === leftSel && 
                     fuzz[mA][match]["rightlabel"] === rightSel) { 
-                        console.log(mA)
                             if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
                                 $('#selectedScore').html(fuzz[mA][match]["reason"])
                             } else { 
@@ -202,6 +204,8 @@ function refreshLists() {
     var searchRE;
     if(searchString !== "") {
         searchRE = new RegExp(searchString);
+        // show waiting icon to indicate that the search is in progress:
+        $("#search i").removeClass("fa-search").addClass("fa-refresh fa-spin");
     }
     var searchMode = $('#search input[type="radio"]:checked').val();
     // 0. Get rid of any previous selections...
@@ -276,6 +280,10 @@ function refreshLists() {
     rightList.html(newRightHTML);
     scores.html(newScoresHTML);
     handleHighlights();
+    if(searchString !== "") {
+        // we're done; change icon back from "waiting" to "search"
+        $("#search i").removeClass("fa-refresh fa-spin").addClass("fa-search");
+    }
 }
 
 function loadMatchesForSelected(leftright, selected) { 
@@ -351,18 +359,6 @@ $(document).ready(function() {
     // initialize stuff
     populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
 
-    // listen to search radio buttons:
-    $('#search input[type="radio"]').change( function(){
-        var searchMode = $('#search input[type="radio"]:checked').val();
-        if(searchMode === "Left") { 
-            $('#search span').css({"background": "#ddffdd", "border-color":"#006600"});
-        } else if(searchMode === "Right") {
-            $('#search span').css({"background": "#ddddff", "border-color":"#000066"});
-        } else { 
-            $('#search span').css({"background": "#ffffff", "border-color":"#000000"});
-        }
-    });
-
     // set up websocket
     socket=io.connect('http://' + document.domain + ':' + location.port); 
     socket.on('connect', function() { 
@@ -372,6 +368,13 @@ $(document).ready(function() {
 
     // set up websocket handlers
     socket.on('confirmDisputeHandled', function(msg) {
+        console.log("HELLOOOOOOOOOOOO");
+        console.log(msg["confStatus"]);
+        if(msg["confStatus"] === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch") {
+            $("#confirmMatch i").removeClass("fa-refresh fa-spin").addClass("fa-thumbs-up");
+        } else { 
+            $("#disputeMatch i").removeClass("fa-refresh fa-spin").addClass("fa-thumbs-down");
+        }
     })
 
     socket.on('contextRequestHandled', function(msg) { 
@@ -382,16 +385,11 @@ $(document).ready(function() {
         for (var i = 0; i < msg["results"]["variables"].length; i++) { 
             newContextHTML += '<div class="contextVar" id="' + msg["results"]["variables"][i] + '">' + '</div>\n';
         }
-    console.log("Attempting to set context element html to " + newContextHTML);
     contextElement.html(newContextHTML);
-    console.log(contextElement)
         // populate the divs
         for (var i = 0; i < msg["results"]["bindings"].length; i++) { 
-            console.log("i: " + i);
             for (var j = 0; j < msg["results"]["variables"].length; j++) { 
                 var varName =  msg["results"]["variables"][j];
-                console.log("Using " + varName);
-                console.log("Object: " +$(".contextVar." + varName));
                 var prevContent = $("#" + msg["leftright"] + "Context .contextVar#" + varName).html();
                 var newContent = '<div class="contextItem">' + msg["results"]["bindings"][i][varName]["value"] + "</div>";
                 $("#" + msg["leftright"] + "Context  .contextVar#" + varName).html(prevContent + newContent);
