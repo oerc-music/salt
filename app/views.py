@@ -58,6 +58,9 @@ def dump():
 @app.route('/instance', methods=["GET"])
 @app.route('/salt', methods=["GET"])
 def instance():
+    if request.args.get('saltsetA') is None or request.args.get('saltsetB') is None:
+        return render_template('index.html')
+
     saltsetA = "http://127.0.0.1:8890/saltsets/" + request.args['saltsetA']
     saltsetB = "http://127.0.0.1:8890/saltsets/" + request.args['saltsetB']
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
