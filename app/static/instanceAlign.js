@@ -57,7 +57,7 @@ function handleHighlight(leftright) {
                     thisElement.addClass(leftright+'Highlight');
                     // call server for context
                     var saltset = (leftright === "left") ? getParameterByName("saltsetA") : getParameterByName("saltsetB");
-                    socket.emit('contextRequest', {saltset:saltset, uri:thisElement.attr('id'), leftright:leftright});
+                    socket.emit('contextRequest', {saltset:saltset, uri:thisElement.attr('title'), leftright:leftright});
                 }
                 $('#'+leftright+'Selected').html('');
                 $('#'+leftright+'Selected').html($('.'+leftright+'Highlight').html());
@@ -122,8 +122,8 @@ function handleConfirmDispute() {
     var confReason = prompt(confMsg + $('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
     if(confReason != null) { 
         // generate the aligned uri (based on left uri + right uri)
-        var lefturi = $('.leftHighlight').attr("id");
-        var righturi = $('.rightHighlight').attr("id");
+        var lefturi = $('.leftHighlight').attr("title");
+        var righturi = $('.rightHighlight').attr("title");
         var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
         // remember this decision locally
         var thisMatch = {
@@ -233,11 +233,11 @@ function refreshLists() {
         }
         // 3. Populate the left and right list with the IDs and names from the fuzz object
         if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') { 
-            newLeftHTML += '<div class="scrollitem'+altString+'" id="' + fuzz[mA][match]["lefturi"] + 
+            newLeftHTML += '<div class="scrollitem'+ altString + 
                 '" title="' + fuzz[mA][match]["lefturi"] + '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
         }
         if(typeof fuzz[mA][match]["righturi"] !== 'undefined') { 
-            newRightHTML += '<div class="scrollitem'+altString+'"+ id="' + fuzz[mA][match]["righturi"] + 
+            newRightHTML += '<div class="scrollitem' + altString +
                 '" title="' + fuzz[mA][match]["righturi"] + '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
         }
         if(mode === "displayDecisions") {
@@ -312,6 +312,10 @@ function modalAdjust() {
         $('#scores').css("width", "50px");
         $('#scores').css("display", "block");
         $('.lockcontrols').css('visibility', 'visible');
+        // start with locked scrolling in match modes
+        if(!($('#lockcentre').hasClass('lockActive'))) { 
+            handleLocks();
+        }
         // don't reveal confirm panel since it should only show after user selects an item on each side
     }
 
