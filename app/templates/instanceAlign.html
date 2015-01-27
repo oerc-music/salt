@@ -32,8 +32,9 @@
             </select>
         </div>
         <div id="search">
+            <span id="refresh"><i class="fa fa-refresh" onclick="$('#searchbox').val(''); refreshLists()"></i></span>
             <input type="text" name="searchbox" id="searchbox"/>
-            <span type="button" id="dosearch" onclick="refreshLists()">
+            <span id="dosearch" onclick="refreshLists()">
                <i class="fa fa-search"></i> 
                Search
             </span>

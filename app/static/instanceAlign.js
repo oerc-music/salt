@@ -115,12 +115,12 @@ function handleConfirmDispute() {
             if ($(this).hasClass("fa-thumbs-up")) {
                 confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
                 confMsg = "Confirm match: ";
-                $(this).removeClass("fa-thumbs-up").addClass("fa-refresh fa-spin");
+                $(this).removeClass("fa-thumbs-up").addClass("fa-cog fa-spin");
 
             } else { 
                 confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
                 confMsg = "Dispute match: ";
-                $(this).removeClass("fa-thumbs-down").addClass("fa-refresh fa-spin");
+                $(this).removeClass("fa-thumbs-down").addClass("fa-cog fa-spin");
             }// generate the aligned uri (based on left uri + right uri)
 
             var lefturi = $('.leftHighlight').attr("title");
@@ -206,7 +206,7 @@ function refreshLists() {
     if(searchString !== "") {
         searchRE = new RegExp(searchString);
         // show waiting icon to indicate that the search is in progress:
-        $("#search i").removeClass("fa-search").addClass("fa-refresh fa-spin");
+        $("#search i").removeClass("fa-search").addClass("fa-cog fa-spin");
     }
     var searchMode = $('#search input[type="radio"]:checked').val();
     // 0. Get rid of any previous selections...
@@ -283,7 +283,7 @@ function refreshLists() {
     handleHighlights();
     if(searchString !== "") {
         // we're done; change icon back from "waiting" to "search"
-        $("#search i").removeClass("fa-refresh fa-spin").addClass("fa-search");
+        $("#search i").removeClass("fa-cog fa-spin").addClass("fa-search");
     }
 }
 
@@ -397,9 +397,9 @@ $(document).ready(function() {
     // set up websocket handlers
     socket.on('confirmDisputeHandled', function(msg) {
         if(msg["confStatus"] === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch") {
-            $("#confirmMatch i").removeClass("fa-refresh fa-spin").addClass("fa-thumbs-up");
+            $("#confirmMatch i").removeClass("fa-cog fa-spin").addClass("fa-thumbs-up");
         } else { 
-            $("#disputeMatch i").removeClass("fa-refresh fa-spin").addClass("fa-thumbs-down");
+            $("#disputeMatch i").removeClass("fa-cog fa-spin").addClass("fa-thumbs-down");
         }
     })
 

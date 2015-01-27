@@ -213,7 +213,7 @@
 
 #modeSelector { 
     float:left;
-    margin-right:60px;
+    margin-right:40px;
 }
 
 #search i { 
@@ -227,4 +227,10 @@
 #dosearch {
     border:1px solid;
     cursor:pointer;
+}
+
+#refresh { 
+    border:1px solid;
+    cursor:pointer;
+    margin-right: 10px;
 }
