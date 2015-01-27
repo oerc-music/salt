@@ -3,7 +3,7 @@ from flask import Flask, render_template, Markup, request
 from flask.ext.socketio import SocketIO, emit
 import sys
 from pprint import pprint
-from SPARQLWrapper import SPARQLWrapper, JSON
+from SPARQLWrapper import SPARQLWrapper, JSON, TURTLE, SELECT, CONSTRUCT
 
 app = Flask(__name__)
 app.debug = True
@@ -185,6 +185,7 @@ def socket_context_request(message):
         response = dict()
         response["leftright"] = message["leftright"]
         response["results"] = handleContextRequest(message)
+        pprint(response)
         emit('contextRequestHandled', response);
         print "Context request handled!"
     except:
@@ -221,21 +222,23 @@ def storeConfirmDispute(message):
         pprint(message)
 
 def handleContextRequest(message)  :
-    try:
+   # try:
         contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
-        contextQuery = contextQuery.format("<" + message["uri"] + ">");
-        print contextQuery
+        contextQuery = contextQuery.format("<" + message["uri"] + ">")
         sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
         sparql.setReturnFormat(JSON)
         sparql.setQuery(contextQuery)
         outcome = sparql.query().convert()
-        pprint(outcome["results"]["bindings"])
+        resultsets = dict()
+        for var in outcome["head"]["vars"]:
+            resultsets[var] = set()
+        for item in outcome["results"]["bindings"]:
+            for var in item.keys():
+                resultsets[var].add(item[var]["value"])
         results = dict()
-        results["variables"] = outcome["head"]["vars"]
-        results["bindings"] = outcome["results"]["bindings"]
-        return(results);
-    except: 
-        raise
+        for var in resultsets.keys():
+            results[var] = list(resultsets[var])
+        return(results)
 
 def sanitize(message) : 
     # sanitize user input

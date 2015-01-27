@@ -109,9 +109,20 @@ function handleConfirmDispute() {
         var confStatus;
         var confMsg;
 
-        var confReason = prompt(confMsg + $('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
+        var confReason = prompt($('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
         if(confReason != null) { 
-            // generate the aligned uri (based on left uri + right uri)
+            // indicate that we're talking to the server and waiting for a response
+            if ($(this).hasClass("fa-thumbs-up")) {
+                confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
+                confMsg = "Confirm match: ";
+                $(this).removeClass("fa-thumbs-up").addClass("fa-refresh fa-spin");
+
+            } else { 
+                confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
+                confMsg = "Dispute match: ";
+                $(this).removeClass("fa-thumbs-down").addClass("fa-refresh fa-spin");
+            }// generate the aligned uri (based on left uri + right uri)
+
             var lefturi = $('.leftHighlight').attr("title");
             var righturi = $('.rightHighlight').attr("title");
             var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
@@ -124,23 +135,13 @@ function handleConfirmDispute() {
                 rightlabel:$('#rightSelected').html(), 
                 reason:confReason
             };
+            console.log("adding to fuzz with " + confStatus);
             if(fuzz[confStatus] !== undefined) { 
                 fuzz[confStatus].push(thisMatch);
             } else { 
                 fuzz[confStatus] = [thisMatch];
             }
-            // indicate that we're talking to the server and waiting for a response
-            if ($(this).hasClass("fa-thumbs-up")) {
-                confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
-                confMsg = "Confirm match: ";
-                $(this).removeClass("fa-thumbs-up").addClass("fa-refresh fa-spin");
-
-            }
-            else { 
-                confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
-                confMsg = "Dispute match: ";
-                $(this).removeClass("fa-thumbs-down").addClass("fa-refresh fa-spin");
-            }
+            
             // and send this decision to the server, for persistent storage
             socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
         }
@@ -355,6 +356,21 @@ function modalAdjust() {
 
 }
 
+function expandContextItems(thisItem) { 
+    if($(thisItem).find("i").hasClass("fa-plus-square-o")) {
+        // we need to expand the items
+        $(thisItem).siblings(".contextItem").css("display", "block");
+        // and change the icon to afford contracting rather than expanding
+        $(thisItem).find("i").removeClass("fa-plus-square-o");
+        $(thisItem).find("i").addClass("fa-minus-square-o");
+    } else { 
+        // we need to contract the items
+        $(thisItem).siblings(".contextItem").css("display", "none");
+        // and change the icon to afford expanding rather than contracting 
+        $(thisItem).find("i").removeClass("fa-minus-square-o");
+        $(thisItem).find("i").addClass("fa-plus-square-o");
+    }
+}
 $(document).ready(function() { 
     // initialize stuff
     populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
@@ -368,8 +384,6 @@ $(document).ready(function() {
 
     // set up websocket handlers
     socket.on('confirmDisputeHandled', function(msg) {
-        console.log("HELLOOOOOOOOOOOO");
-        console.log(msg["confStatus"]);
         if(msg["confStatus"] === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch") {
             $("#confirmMatch i").removeClass("fa-refresh fa-spin").addClass("fa-thumbs-up");
         } else { 
@@ -378,23 +392,31 @@ $(document).ready(function() {
     })
 
     socket.on('contextRequestHandled', function(msg) { 
+        //TODO refactor so we don't loop through the same stuff three times
         console.log("Context request handled: ", msg);
         var contextElement = $("#" + msg["leftright"]  + "Context");
         var newContextHTML = ""
         // create divs for each type of variable
-        for (var i = 0; i < msg["results"]["variables"].length; i++) { 
-            newContextHTML += '<div class="contextVar" id="' + msg["results"]["variables"][i] + '">' + '</div>\n';
+        for (var i = 0; i < Object.keys(msg["results"]).length; i++) { 
+            var varName = Object.keys(msg["results"])[i];
+            newContextHTML += '<div class="contextVar ' + varName + '">' + '<span class="contextVarHeader" onclick="expandContextItems(this)">' + '<i class="fa fa-plus-square-o"></i> <span class="numContextItems"></span> ' + varName + '</span></div>\n';
         }
-    contextElement.html(newContextHTML);
+        contextElement.html(newContextHTML);
         // populate the divs
-        for (var i = 0; i < msg["results"]["bindings"].length; i++) { 
-            for (var j = 0; j < msg["results"]["variables"].length; j++) { 
-                var varName =  msg["results"]["variables"][j];
-                var prevContent = $("#" + msg["leftright"] + "Context .contextVar#" + varName).html();
-                var newContent = '<div class="contextItem">' + msg["results"]["bindings"][i][varName]["value"] + "</div>";
-                $("#" + msg["leftright"] + "Context  .contextVar#" + varName).html(prevContent + newContent);
-
+        for (var i = 0; i < Object.keys(msg["results"]).length; i++) { 
+            var varName = Object.keys(msg["results"])[i];
+            for(var j = 0; j < msg["results"][varName].length; j++) {
+                var prevContent = $("#" + msg["leftright"] + "Context .contextVar." + varName).html();
+                var newContent = '<div class="contextItem"><i class="fa fa-caret-right"></i> ' +  msg["results"][varName][j] + "</div>";
+                $("#" + msg["leftright"] + "Context  .contextVar." + varName).html(prevContent + newContent);
             }
         }
+
+        // update item counts for all variables
+        for (var i = 0; i < Object.keys(msg["results"]).length; i++) { 
+            var varName = Object.keys(msg["results"])[i];
+            $("#" + msg["leftright"] + "Context  .contextVar." + varName + " .numContextItems").html($("#" + msg["leftright"] + "Context  .contextVar." + varName + " .contextItem").length);
+
+        } 
     })
 });

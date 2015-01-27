@@ -198,6 +198,17 @@
 
 #contextWrapper { 
     font-family: sans-serif;
+    font-size: 80%;
+}
+
+.contextVar .contextItem { 
+    margin-left: 30px;
+    font-size: 80%;
+    display:none;
+}
+
+.contextVarHeader { 
+    cursor:pointer;
 }
 
 #modeSelector { 
