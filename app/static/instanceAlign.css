@@ -220,6 +220,10 @@
     padding:2px;
 }
 
+#search input:disabled { 
+    cursor:not-allowed;
+}
+
 #dosearch {
     border:1px solid;
     cursor:pointer;

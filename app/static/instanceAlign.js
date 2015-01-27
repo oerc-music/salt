@@ -321,8 +321,15 @@ function loadMatchesForSelected(leftright, selected) {
 }
 
 function modalAdjust() {  
-    // Adjust width of score/reason column, and decide whether lock controls / confirmation panel should be visible, depending on mode
-    // (matching mode, or review mode, i.e. view confirmations / disputations)
+    // Adjust various things depending on mode
+    // (simple list mode, matching mode, or review confirmations / disputations mode)
+    // * Adjust width of score/reason column
+    // * Show or hide lock controls and confirmation panel
+    // * Deactivate left / right search when not in simple list mode
+    
+    // By default, enable all search radio buttons
+    $("#search input").removeAttr("disabled");
+
     var mA = $('#modeSelector').val();
     if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {  
         $('#scores').css("width", "370px");
@@ -342,6 +349,11 @@ function modalAdjust() {
         if($('#lockcentre').hasClass('lockActive')) { 
             handleLocks();
         }
+        // only allow searching on Both at once (deactivate Left only / Right only)
+        var radioButtons = $("#search input");
+        $(radioButtons[1]).attr("disabled", "disabled"); // left
+        $(radioButtons[2]).attr("disabled", "disabled"); // right
+        $(radioButtons[3]).prop("checked", true); // make sure Both is selected
     }
     else { 
         $('#scores').css("width", "50px");

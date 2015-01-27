@@ -3,7 +3,7 @@ from flask import Flask, render_template, Markup, request
 from flask.ext.socketio import SocketIO, emit
 import sys
 from pprint import pprint
-from SPARQLWrapper import SPARQLWrapper, JSON, TURTLE, SELECT, CONSTRUCT
+from SPARQLWrapper import SPARQLWrapper, JSON
 
 app = Flask(__name__)
 app.debug = True
