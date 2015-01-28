@@ -91,6 +91,7 @@
 
 .scrollitem {
     overflow: visible;
+    position:relative;
 }
 
 .scrollitem .empty { 
@@ -98,9 +99,55 @@
     cursor:default !important;
 }
 
+
+.scrollitem.unlisted { 
+    cursor:default !important;
+}
+
+.scrollitem.unlisted span { 
+    cursor:default;
+    color:#aaaaaa;
+    text-decoration:line-through;
+}
+
+.scrollitem i { 
+    position: absolute;
+    left:270px;
+    visibility:hidden;
+    text-decoration:none;
+    cursor:pointer;
+    padding-left:2px;
+    padding-right:2px;
+}
+
+.scrollitem:hover { 
+    color:#660000;
+}
+
+.scrollitem:hover i {
+    visibility:visible;
+    color:#cccccc;
+}
+
+.scrollitem i:hover { 
+    color:#000000;
+}
+
+.scrollitem.matchReference { 
+    text-decoration:underline;
+}
+
+.scrollitem.matchReference i{
+    visibility:hidden !important;
+}
+
 .leftHighlight, .rightHighlight {
-    color:#ff0000;
+    color:#ff0000 !important;
     background: #ffdddd;
+}
+
+.leftHighlight:hover i, .rightHighlight:hover i { 
+    visibility:hidden !important;
 }
 
 .lockcontrols { 
@@ -160,18 +207,33 @@
 }
 
 #confirmPanel { 
-    visibility:hidden;
     margin-top: 30px;
     position:absolute;
 }
+
+#singleConfirmDispute, #bulkConfirm { 
+    display:none;
+}
+
 
 #confirmPanel i { 
     cursor:pointer;
 }
 
+#bulkConfirm {
+    position:relative; 
+    cursor:pointer;
+}
+
+#bulkConfirm i {
+    color: #006600;
+    background:#ddffdd;
+    margin-right: -5px;
+}
+
 #confirmMatch i { 
-    background:#006600;
-    color:#ddffdd;
+    color:#006600;
+    background:#ddffdd;
 }
 
 #disputeMatch i { 
@@ -180,9 +242,6 @@
     color:#ffdddd;
 }
 
-.matchReference { 
-    text-decoration:underline;
-}
 
 #leftContext {
    clear:both;
@@ -234,3 +293,5 @@
     cursor:pointer;
     margin-right: 10px;
 }
+
+

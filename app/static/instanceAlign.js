@@ -6,7 +6,7 @@ var userid = "testuser";
 var DELAY = 250, clicks = 0, timer = null;
 
 // websocket variable (initialized in $(document).ready
-var socket
+var socket;
 
 
 
@@ -44,7 +44,17 @@ function handleHighlight(leftright) {
     // i.e. we want to load only those labels (in the other list) that match the dblclicked label 
     // To differentiate between single and double click on the same element, we have to be slightly
     // hacky. See here: https://stackoverflow.com/questions/6330431/jquery-bind-double-click-and-single-click-separately
-    $('#'+leftright+' .scrollitem').click(function() {
+    $('#'+leftright+' .scrollitem').click(function(e) {
+        if($(e.target).is("i") || 
+            $(e.target).hasClass("unlisted") || 
+            $(e.target).parent().hasClass("unlisted") ){ 
+            // if this click event is bubbling up from a click on the eye icon (i.e. the user
+            // wanted to toggle listing/unlisting, not highlighting);
+            // or, if the clicked scrollitem is currently unlisted;
+            // of, if the click was on the internal span of such a scroll item;
+            // do not handle highlighting actions for this event
+            return;
+        }
         var thisElement = $(this);
         clicks++; // count clicks
         if(clicks === 1) { 
@@ -60,37 +70,41 @@ function handleHighlight(leftright) {
                     socket.emit('contextRequest', {saltset:saltset, uri:thisElement.attr('title'), leftright:leftright});
                 }
                 $('#'+leftright+'Selected').html('');
-                $('#'+leftright+'Selected').html($('.'+leftright+'Highlight').html());
+                $('#'+leftright+'Selected').html($('.'+leftright+'Highlight span').html());
                 handleScoreDisplay(); 
                 clicks = 0; // reset counter
-                // if both sides have a selection, always give option to confirm
+                // if both sides have a selection, give option to confirm/dispute
                 if($('#leftSelected').html() && $('#rightSelected').html()) { 
-                    $('#confirmPanel').css('visibility', 'visible');
-                }
-                else { 
-                    $('#confirmPanel').css('visibility', 'hidden');
+                    $('#singleConfirmDispute').css('display', 'inline');
+                    $('#bulkConfirm').css('display', 'none');
+                } else { 
+                    $('#singleConfirmDispute').css('display', 'none');
+                    // if only one side has a selection, give option to bulk confirm
+                    if($('#leftSelected').html() || $('#rightSelected').html()) { 
+                        $('#bulkConfirm').css('display', 'inline');
+                    } else { 
+                        $('#bulkConfirm').css('display', 'none');
+                    }
                 }
             }, DELAY);
         } else {
             // on double click: clear this list, retain the double clicked element,
             // and call loadMatchesForSelected to load up matches on the other list
-            $('#'+leftright+' .scrollitem').removeClass(leftright+'Highlight');
-            $('#'+leftright+' .scrollitem').css('display', 'none');
-            thisElement.css('display', 'initial');
-
-            // by double clicking, we are making this item a match reference
-            // as such, we should style it differently;
-            thisElement.addClass('matchReference');
-            // remove the usual click handler; 
-            thisElement.unbind('click');
-
+            // .. but only if we are in a matching mode (i.e. anything but simplelist)
+            if($("#modeSelector").val() !== "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
+                $('#'+leftright+' .scrollitem').removeClass(leftright+'Highlight');
+                $('#'+leftright+' .scrollitem').css('display', 'none');
+                thisElement.css('display', 'initial');
+                // by double clicking, we are making this item a match reference
+                // as such, we should style it differently;
+                thisElement.addClass('matchReference');
+                // ...and give it a different click behaviour (dbl-click to exit match
+                // reference mode, i.e. return to full lists on both sides)
+                thisElement.click(function() { clicks = 0; refreshLists();  });
+                loadMatchesForSelected(leftright, thisElement.find("span"));
+            }
             clearTimeout(timer); // prevent single-click action
-
-            // ...and give it a different click behaviour (dbl-click to exit match
-            // reference mode, i.e. return to full lists on both sides)
-            thisElement.click(function() { refreshLists() });
             clicks = 0; // reset counter
-            loadMatchesForSelected(leftright, thisElement);
         }
 
     });
@@ -105,22 +119,49 @@ function handleHighlight(leftright) {
 }
 
 function handleConfirmDispute() { 
-    $('#confirmPanel i').click(function() { 
+
+    $('#bulkConfirm').click(function() {
+        // identify the URI and saltset on which this bulk-confirm is anchored
+        // i.e. the selected item that is being matched to all listed items in the other set
+        var anchorUri;
+        var anchorSet;
+        var target;
+        var leftright;
+        // user only sees this button if exactly one side has a selection
+        if($('#leftSelected').html()) { 
+            anchorUri = $('.leftHighlight').attr("title");
+            anchorSet = getParameterByName("saltsetA");
+            leftright = "left";
+            target = "right";
+        } else { 
+            anchorUri = $('.rightHighlight').attr("title");
+            anchorSet = getParameterByName("saltsetB");
+            leftright = "right";
+            target = "left";
+        }
+            
+        var confMsg = "Bulk-Confirming match between " + $('#'+leftright+'Selected').html() + 
+                      " in the " + leftright + "-hand list and " + $("#" + target + " .scrollitem").not(".unlisted").length
+                      + " active items in the " + target + "-hand list. If you are sure, "+
+                      "please enter a reason below.";
+        console.log(confMsg);
+    })
+
+    $('#singleConfirmDispute i').click(function() { 
         var confStatus;
         var confMsg;
-
         var confReason = prompt($('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
         if(confReason != null) { 
             // indicate that we're talking to the server and waiting for a response
-            if ($(this).hasClass("fa-thumbs-up")) {
+            if ($(element).hasClass("fa-thumbs-up")) {
                 confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
                 confMsg = "Confirm match: ";
-                $(this).removeClass("fa-thumbs-up").addClass("fa-cog fa-spin");
+                $(element).removeClass("fa-thumbs-up").addClass("fa-cog fa-spin");
 
             } else { 
                 confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
                 confMsg = "Dispute match: ";
-                $(this).removeClass("fa-thumbs-down").addClass("fa-cog fa-spin");
+                $(element).removeClass("fa-thumbs-down").addClass("fa-cog fa-spin");
             }// generate the aligned uri (based on left uri + right uri)
 
             var lefturi = $('.leftHighlight').attr("title");
@@ -145,8 +186,7 @@ function handleConfirmDispute() {
             // and send this decision to the server, for persistent storage
             socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
         }
-
-    });
+    })
 }
 
 function handleScoreDisplay() { 
@@ -213,7 +253,7 @@ function refreshLists() {
     $('#leftSelected').html('');
     $('#rightSelected').html('');
     $('#selectedScore').html('');
-    $('#confirmPanel').css("visibility", "hidden");
+    $('#singleConfirmDispute').css("display", "none");
     // ... and adjust style depending on mode.
     modalAdjust();
     // 1. Get the match algorithm (mode) from the selection list
@@ -249,23 +289,23 @@ function refreshLists() {
         } else {
             altString = "";
         }
-        // 3. Populate the left and right list with the IDs and names from the fuzz object
+        // 3. Populate the left and right list with URIs and labels from the fuzz object
         // Only include if no search is specified, or the search is being performed on
         // the other side (leftright), or the regex matches
         if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') {
             if(typeof(searchRE) === "undefined" || searchMode === "Right" || searchRE.test(fuzz[mA][match]["leftlabel"])) { 
                 newLeftHTML += '<div class="scrollitem'+ altString + 
-                    '" title="' + fuzz[mA][match]["lefturi"] + '">' + fuzz[mA][match]["leftlabel"] + '</div>\n';
+                    '" title="' + fuzz[mA][match]["lefturi"] + '"><span>' + fuzz[mA][match]["leftlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i></div>\n';
             } else if(mode !== "simpleList") { 
                 // if we are in any mode where left matches right (i.e. anything but simpleList)...
-                // ...continue on to next match set and print nothing for this one
+                // ...continue on to next match set and print nothing on either side for this one
                 continue;
             }
         }
         if(typeof fuzz[mA][match]["righturi"] !== 'undefined') { 
             if(typeof(searchRE) === "undefined" || searchMode === "Left" || searchRE.test(fuzz[mA][match]["rightlabel"])) { 
                 newRightHTML += '<div class="scrollitem' + altString +
-                    '" title="' + fuzz[mA][match]["righturi"] + '">' + fuzz[mA][match]["rightlabel"] + '</div>\n';
+                    '" title="' + fuzz[mA][match]["righturi"] + '"><span>' + fuzz[mA][match]["rightlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i></div>\n';
             } else if (mode !== "simpleList") { 
                 // see above (for left label)
                continue;
@@ -306,8 +346,8 @@ function loadMatchesForSelected(leftright, selected) {
     for (var match in fuzz[mA]) { 
         // re-populate target list with items matching dblclicked name 
         if(fuzz[mA][match][leftright+"label"] === selected.html()) {
-            newTargetHTML += '<div class="scrollitem" id="' + fuzz[mA][match][target+"uri"] + 
-                '">' + fuzz[mA][match][target+"label"] + '</div>\n';
+            newTargetHTML += '<div class="scrollitem" title="' + fuzz[mA][match][target+"uri"] + 
+                '"><span>' + fuzz[mA][match][target+"label"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i></div>\n';
             newScoresHTML += '<div class="scrollitem">' + fuzz[mA][match]["score"] + '</div>\n';
         }
     }
@@ -318,6 +358,20 @@ function loadMatchesForSelected(leftright, selected) {
     // need to reinitialize highlighting (i.e. click handlers) there
     handleHighlight(target); 
 
+}
+
+function toggleListExclusion(element) { 
+    if($(element).hasClass("fa-eye-slash")) { 
+        // unlist this item
+        $(element).removeClass("fa-eye-slash");
+        $(element).addClass("fa-eye");
+        $(element).parent().addClass("unlisted");
+    } else { 
+        // relist this item
+        $(element).removeClass("fa-eye");
+        $(element).addClass("fa-eye-slash");
+        $(element).parent().removeClass("unlisted");
+    }
 }
 
 function modalAdjust() {  
@@ -335,7 +389,6 @@ function modalAdjust() {
         $('#scores').css("width", "370px");
         $('#scores').css("display", "block");
         $('.lockcontrols').css('visibility', 'hidden');
-        $('#confirmPanel').css('visibility', 'hidden');
         // always lock scrolling in display-decisions mode
         if(!($('#lockcentre').hasClass('lockActive'))) { 
             handleLocks();
