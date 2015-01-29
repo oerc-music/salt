@@ -23,7 +23,7 @@
             <select id="modeSelector" onChange="refreshLists()">
                 <option value="http://127.0.0.1:8890/matchAlgorithm/confirmedMatch">Confirmed by you</option>
                 <option value="http://127.0.0.1:8890/matchAlgorithm/disputedMatch">Disputed by you</option>
-                <option value="http://127.0.0.1:8890/matchAlgorithm/simpleList">Simple list</option>
+                <option value="http://127.0.0.1:8890/matchAlgorithm/simpleList">Unmatched lists</option>
                 <option selected="selected" value="http://127.0.0.1:8890/matchAlgorithm/exactMatch">Exact matches</option>
                 <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-set-ratio">Token-Set ratio</option>
                 <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-sort-ratio">Token-Sort ratio</option>
@@ -126,7 +126,7 @@
                                 "leftlabel": "{{ result["saltAname"]|safe }}",
                                 "righturi": "{{ result["saltBuri"]|safe }}",
                                 "rightlabel": "{{ result["saltBname"]|safe }}",
-                                "reason": "{{ result["reason"]|safe }}"
+                                "confReason": "{{ result["confReason"]|safe }}"
                              }
                              {% set innerDelim = "," %}
                              {% endfor %}

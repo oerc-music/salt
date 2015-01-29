@@ -123,19 +123,17 @@ function handleConfirmDispute() {
     $('#bulkConfirm').click(function() {
         // identify the URI and saltset on which this bulk-confirm is anchored
         // i.e. the selected item that is being matched to all listed items in the other set
-        var anchorUri;
-        var anchorSet;
+        var anchoruri;
         var target;
         var leftright;
+        var confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
         // user only sees this button if exactly one side has a selection
         if($('#leftSelected').html()) { 
-            anchorUri = $('.leftHighlight').attr("title");
-            anchorSet = getParameterByName("saltsetA");
+            anchoruri = $('.leftHighlight').attr("title");
             leftright = "left";
             target = "right";
         } else { 
-            anchorUri = $('.rightHighlight').attr("title");
-            anchorSet = getParameterByName("saltsetB");
+            anchoruri = $('.rightHighlight').attr("title");
             leftright = "right";
             target = "left";
         }
@@ -144,13 +142,36 @@ function handleConfirmDispute() {
                       " in the " + leftright + "-hand list and " + $("#" + target + " .scrollitem").not(".unlisted").length
                       + " active items in the " + target + "-hand list. If you are sure, "+
                       "please enter a reason below.";
-        console.log(confMsg);
-    })
+        var confReason = prompt(confMsg);
+        if(confReason != null) { 
+            // generate matches between the anchor item and each target item
+            var bulkMatches = $.map($("#"+target+" .scrollitem").not(".unlisted"), 
+                    function(targetItem) {
+                        var targeturi = $(targetItem).attr("title") ;
+                        var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + anchoruri.replace("http://", "").replace(/\//g, "__") + "___" + targeturi.replace("http://", "").replace(/\//g, "__");
+                        // set up this match. Why use the longwinded syntax instead of nice JSON? 
+                        // Because JavaScript. See http://www.unethicalblogger.com/2008/03/21/javascript-wonks-missing-after-property-id.html
+                        var thisMatch = {};
+                        thisMatch["aligneduri"] =  aligneduri;
+                        thisMatch[leftright+"uri"] = anchoruri; 
+                        thisMatch[target+"uri"] = targeturi; 
+                        thisMatch[leftright+"label"] = $('#' + leftright + 'Selected').html(); 
+                        thisMatch[target+"label"] = $(targetItem).find('span').html(); 
+                        thisMatch["confReason"] = confReason;
+                        
+                        // remember each match locally
+                        localStoreConfirmDispute(thisMatch, confStatus);
+                        return thisMatch;
+                    });
+            socket.emit('bulkConfirmEvent', {matches: bulkMatches, confStatus: confStatus, confReason: confReason, timestamp: Date.now(), user:userid});
+        }
+    });
 
-    $('#singleConfirmDispute i').click(function() { 
+    $('#singleConfirmDispute i').click(function(e) { 
         var confStatus;
         var confMsg;
         var confReason = prompt($('#leftSelected').html() + " :: " + $('#rightSelected').html() + "\nPlease enter a reason below.");
+        var element = e.target;
         if(confReason != null) { 
             // indicate that we're talking to the server and waiting for a response
             if ($(element).hasClass("fa-thumbs-up")) {
@@ -167,6 +188,7 @@ function handleConfirmDispute() {
             var lefturi = $('.leftHighlight').attr("title");
             var righturi = $('.rightHighlight').attr("title");
             var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+            
             // remember this decision locally
             var thisMatch = {
                 matchuri: aligneduri, 
@@ -174,20 +196,26 @@ function handleConfirmDispute() {
                 righturi:righturi, 
                 leftlabel:$('#leftSelected').html(), 
                 rightlabel:$('#rightSelected').html(), 
-                reason:confReason
+                confReason:confReason
             };
-            console.log("adding to fuzz with " + confStatus);
-            if(fuzz[confStatus] !== undefined) { 
-                fuzz[confStatus].push(thisMatch);
-            } else { 
-                fuzz[confStatus] = [thisMatch];
-            }
-            
+            console.log("Reason was " + thisMatch["confReason"]);
+            localStoreConfirmDispute(thisMatch, confStatus);
+
             // and send this decision to the server, for persistent storage
             socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
         }
-    })
+    });
 }
+
+function localStoreConfirmDispute(match, confStatus) {
+    console.log("Locally storing " + match["aligneduri"]);
+    if(fuzz[confStatus] !== undefined) { 
+        fuzz[confStatus].push(match);
+    } else { 
+        fuzz[confStatus] = [match];
+    }
+}
+
 
 function handleScoreDisplay() { 
     $('#selectedScore').html('');
@@ -201,11 +229,11 @@ function handleScoreDisplay() {
         for(var match in fuzz[mA])  {
             if(fuzz[mA][match]["leftlabel"] === leftSel && 
                     fuzz[mA][match]["rightlabel"] === rightSel) { 
-                            if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
-                                $('#selectedScore').html(fuzz[mA][match]["reason"])
-                            } else { 
-                                $('#selectedScore').html(fuzz[mA][match]["score"]);
-                            }
+                        if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
+                            $('#selectedScore').html(fuzz[mA][match]["confReason"])
+                        } else { 
+                            $('#selectedScore').html(fuzz[mA][match]["score"]);
+                        }
                         break;
                     }
         }
@@ -240,7 +268,7 @@ function scrollLock(leftright) {
 }
 
 function refreshLists() {
-    // -1. Store the search string as a regex if it exists
+    // Store the search string as a regex if it exists
     var searchString = $("#searchbox").val();
     var searchRE;
     if(searchString !== "") {
@@ -249,14 +277,14 @@ function refreshLists() {
         $("#search i").removeClass("fa-search").addClass("fa-cog fa-spin");
     }
     var searchMode = $('#search input[type="radio"]:checked').val();
-    // 0. Get rid of any previous selections...
+    // Get rid of any previous selections...
     $('#leftSelected').html('');
     $('#rightSelected').html('');
     $('#selectedScore').html('');
     $('#singleConfirmDispute').css("display", "none");
     // ... and adjust style depending on mode.
     modalAdjust();
-    // 1. Get the match algorithm (mode) from the selection list
+    // Get the match algorithm (mode) from the selection list
     var mA = $("#modeSelector").val();
     var mode;
     if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {
@@ -268,15 +296,15 @@ function refreshLists() {
     else { 
         mode = "match";
     }
-    // 2. Grab the lists (so we don't have to keep searching the DOM every time):
+    // Grab the lists (so we don't have to keep searching the DOM every time):
     var leftList = $("#left");
     var rightList = $("#right");
     var scores = $("#scores");
-    // 3. Clear the lists:
+    // Clear the lists:
     leftList.html("");
     rightList.html("");
     scores.html("");
-    // 2. Loop through the relevant part of the fuzz object
+    // Loop through the relevant part of the fuzz object
     var newLeftHTML = "";
     var newRightHTML = "";
     var newScoresHTML = "";
@@ -289,7 +317,7 @@ function refreshLists() {
         } else {
             altString = "";
         }
-        // 3. Populate the left and right list with URIs and labels from the fuzz object
+        // Populate the left and right list with URIs and labels from the fuzz object
         // Only include if no search is specified, or the search is being performed on
         // the other side (leftright), or the regex matches
         if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') {
@@ -312,7 +340,7 @@ function refreshLists() {
             }
         }   
         if(mode === "displayDecisions") {
-            newScoresHTML += '<div class="scrollitem'+altString+'" title="'+ fuzz[mA][match]["reason"] + '">' + fuzz[mA][match]["reason"] + '&nbsp;</div>\n';
+            newScoresHTML += '<div class="scrollitem'+altString+'" title="'+ fuzz[mA][match]["confReason"] + '">' + fuzz[mA][match]["confReason"] + '&nbsp;</div>\n';
         } else {
             newScoresHTML += '<div class="scrollitem">' + fuzz[mA][match]["score"] + '</div>\n';
         }
@@ -377,12 +405,14 @@ function toggleListExclusion(element) {
 function modalAdjust() {  
     // Adjust various things depending on mode
     // (simple list mode, matching mode, or review confirmations / disputations mode)
-    // * Adjust width of score/reason column
+    // * Adjust width of score/confReason column
     // * Show or hide lock controls and confirmation panel
     // * Deactivate left / right search when not in simple list mode
     
-    // By default, enable all search radio buttons
-    $("#search input").removeAttr("disabled");
+    // By default, only allow searches on both lists at once
+    var radioButtons = $("#search input");
+    $(radioButtons[1]).attr("disabled", "disabled"); // left
+    $(radioButtons[2]).attr("disabled", "disabled"); // right
 
     var mA = $('#modeSelector').val();
     if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {  
@@ -393,6 +423,7 @@ function modalAdjust() {
         if(!($('#lockcentre').hasClass('lockActive'))) { 
             handleLocks();
         }
+        $(radioButtons[3]).prop("checked", true); // make sure Both is selected
     }
     else if (mA === "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
         // no scores to display on an unmatched simple listing...
@@ -402,11 +433,8 @@ function modalAdjust() {
         if($('#lockcentre').hasClass('lockActive')) { 
             handleLocks();
         }
-        // only allow searching on Both at once (deactivate Left only / Right only)
-        var radioButtons = $("#search input");
-        $(radioButtons[1]).attr("disabled", "disabled"); // left
-        $(radioButtons[2]).attr("disabled", "disabled"); // right
-        $(radioButtons[3]).prop("checked", true); // make sure Both is selected
+        // allow searches on left only / right only
+        $("#search input").removeAttr("disabled");
     }
     else { 
         $('#scores').css("width", "50px");
@@ -416,6 +444,7 @@ function modalAdjust() {
         if(!($('#lockcentre').hasClass('lockActive'))) { 
             handleLocks();
         }
+        $(radioButtons[3]).prop("checked", true); // make sure Both is selected
         // don't reveal confirm panel since it should only show after user selects an item on each side
     }
 
@@ -454,7 +483,11 @@ $(document).ready(function() {
         } else { 
             $("#disputeMatch i").removeClass("fa-cog fa-spin").addClass("fa-thumbs-down");
         }
-    })
+    });
+
+    socket.on('bulkConfirmHandled', function(msg) {
+        console.log("Bulk confirm handled: ", msg);
+    });
 
     socket.on('contextRequestHandled', function(msg) { 
         //TODO refactor so we don't loop through the same stuff three times

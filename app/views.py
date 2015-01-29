@@ -158,7 +158,7 @@ def instance():
     for result in matchDecisions["results"]["bindings"]:
         thisResult = {"matchuri": result["matchuri"]["value"],
                       "decision": result["decision"]["value"],
-                      "reason": result["reason"]["value"],
+                      "confReason": result["reason"]["value"],
                       "saltAuri": result["saltAuri"]["value"],
                       "saltAname": result["saltAname"]["value"],
                       "saltBuri": result["saltBuri"]["value"],
@@ -170,30 +170,10 @@ def instance():
     return render_template('instanceAlign.html', results = toTemplate)
 
 
-@socketio.on('confirmDisputeEvent')
-def socket_message(message):
-    storeConfirmDispute(message)
-    emit('confirmDisputeHandled', {"confStatus": message["confStatus"]}) 
-
-@socketio.on('clientConnectionEvent')
-def socket_connect(message):
-    print(message)
-
-@socketio.on('contextRequest')
-def socket_context_request(message):
-    try: 
-        response = dict()
-        response["leftright"] = message["leftright"]
-        response["results"] = handleContextRequest(message)
-        pprint(response)
-        emit('contextRequestHandled', response);
-        print "Context request handled!"
-    except:
-        emit('contextRequestFailed')
-
 def storeConfirmDispute(message):
     message = sanitize(message)
-    pprint(message)
+    print "Storing " + message["aligneduri"] + " on server:"
+    pprint (message);
     # Take the user's input and store it as triples
     if (message['confStatus'] and message['lefturi'] and message['righturi'] and message['aligneduri'] and message['timestamp'] and message['user']): 
         sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
@@ -211,7 +191,7 @@ def storeConfirmDispute(message):
             <{7}> <http://127.0.0.1:8890/matchParticipant> <{0}> .
         }}"""
 	queryString = turtle.format(message['aligneduri'], message['confStatus'], message['confReason'], message['user'], message['aligneduri'], message['timestamp'], message['lefturi'], message['righturi'])
-	print queryString
+        print(queryString)
         sparql.setQuery(queryString)
         outcome = sparql.query()
         print "Outcome of triple insert was: "
@@ -221,7 +201,23 @@ def storeConfirmDispute(message):
         print "Something important is missing in the message:"
         pprint(message)
 
-def handleContextRequest(message)  :
+def storeBulkConfirm(message):
+    print("Bulk confirm called with")
+    for match in message['matches']:
+        singleMatch = dict()
+        singleMatch['confStatus'] = message['confStatus']
+        singleMatch['confReason'] = message['confReason']
+        singleMatch['user'] = message['user']
+        singleMatch['timestamp'] = message['timestamp']
+        singleMatch['aligneduri'] = match['aligneduri']
+        singleMatch['lefturi'] = match['lefturi']
+        singleMatch['leftlabel'] = match['leftlabel']
+        singleMatch['righturi'] = match['righturi']
+        singleMatch['rightlabel'] = match['rightlabel']
+        storeConfirmDispute(singleMatch)
+    #TODO also store information on bulk nature of this all
+
+def handleContextRequest(message):
    # try:
         contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
         contextQuery = contextQuery.format("<" + message["uri"] + ">")
@@ -244,9 +240,34 @@ def sanitize(message) :
     # sanitize user input
     # TODO find a python library that does this properly
     for key in message:
-        print key
-        message[key] = str(message[key]).replace("'", "&#39;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;")
+        message[key] = str(message[key]).replace("'", "&#39;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;").replace(";", "&#59;");
     return message
+
+@socketio.on('confirmDisputeEvent')
+def socket_confirmDispute(message):
+    storeConfirmDispute(message)
+    emit('confirmDisputeHandled', {"confStatus": message["confStatus"]}) 
+
+@socketio.on("bulkConfirmEvent")
+def socket_bulkConfirm(message):
+    storeBulkConfirm(message)
+    emit('bulkConfirmHandled', {"confStatus": message["confStatus"]})
+
+@socketio.on('clientConnectionEvent')
+def socket_connect(message):
+    print(message)
+
+@socketio.on('contextRequest')
+def socket_context_request(message):
+    try: 
+        response = dict()
+        response["leftright"] = message["leftright"]
+        response["results"] = handleContextRequest(message)
+        emit('contextRequestHandled', response);
+        print "Context request handled!"
+    except:
+        emit('contextRequestFailed')
+
 
 if __name__ == '__main__':
     socketio.run(app)
