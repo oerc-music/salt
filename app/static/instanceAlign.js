@@ -469,9 +469,10 @@ function expandContextItems(thisItem) {
     }
 }
 
-function revealAnyContextMatches(salt_uri, leftright) { 
+function revealAnyContextMatches(uri, leftright) { 
     var target = leftright === "left" ? "right" : "left";
-    $('#'+target+' .scrollitem[title="' + salt_uri + '"]').addClass("contextMatch");
+    console.log(uri);
+    $('#'+target+' .scrollitem[title="' + uri + '"]').addClass("contextMatch");
 }
 
 $(document).ready(function() { 
@@ -502,46 +503,47 @@ $(document).ready(function() {
         // remove any previously highlighted context matches (from previous context requests)
         $(".contextMatch").removeClass("contextMatch");
 
-        //TODO refactor so we don't loop through the same stuff three times
         console.log("Context request handled: ", msg);
         var contextElement = $("#" + msg["leftright"]  + "Context");
         var newContextHTML = "";
-
-        // if any of our context parameters 
-        // look for special salt_uri query parameters that received at least one instantiation on the query:
-        Object.keys(msg["results"]).map( function(x) { 
-                    if(x.substring(0,8) === "salt_uri" && msg["results"][x].length) {
-                        //send them off to be highlighted in the list of scrollitems
-                        revealAnyContextMatches(msg["results"][x], msg["leftright"]);   
-                    }
-        });
-
-        // and filter out the rest, i.e. those that we want to show in the context view
-        var contextItems = Object.keys(msg["results"]).filter(function(x) { 
-                if(x.substring(0,8) !== "salt_uri") return x;
-        });
         
-        // create divs for each type of variable
-        for (var i = 0; i < contextItems.length; i++) { 
-            var varName = contextItems[i];
-            newContextHTML += '<div class="contextVar ' + varName + '">' + '<span class="contextVarHeader" onclick="expandContextItems(this)">' + '<i class="fa fa-plus-square-o"></i> <span class="numContextItems"></span> ' + varName + '</span></div>\n';
+        // reveal any context matches on any URIs we get sent
+        var contextURIs = msg["results"]["uris"];
+        for(var i=0; i<contextURIs.length; i++) { 
+            revealAnyContextMatches(msg["results"]["uris"][i][1], msg["leftright"]);
         }
-        contextElement.html(newContextHTML);
-        // populate the divs
-        for (var i = 0; i < contextItems.length; i++) { 
-            var varName = contextItems[i];
-            for(var j = 0; j < msg["results"][varName].length; j++) {
-                var prevContent = $("#" + msg["leftright"] + "Context .contextVar." + varName).html();
-                var newContent = '<div class="contextItem"><i class="fa fa-caret-right"></i> ' +  msg["results"][varName][j] + "</div>";
-                $("#" + msg["leftright"] + "Context  .contextVar." + varName).html(prevContent + newContent);
+       
+        // now display all the literals we get back in the context view 
+        var varNameInstances = {}; // keep count of variables we need to create divs for
+        var contextLiterals = msg["results"]["literals"];
+        for (var i=0; i < contextLiterals.length; i++) {
+            var varName = contextLiterals[i][0];
+            if (!(varName in varNameInstances)) { 
+                varNameInstances[varName] = 1;
+                // create the div
+                newContextHTML += '<div class="contextVar ' + varName + '">' + '<span class="contextVarHeader" onclick="expandContextItems(this)">' + '<i class="fa fa-plus-square-o"></i> <span class="numContextItems"></span> ' + varName + '</span></div>\n';
+            } else { 
+               // div already create
+                varNameInstances[varName]++;
             }
         }
 
-        // update item counts for all variables
-        for (var i = 0; i < contextItems.length; i++) { 
-            var varName = contextItems[i];
-            $("#" + msg["leftright"] + "Context  .contextVar." + varName + " .numContextItems").html($("#" + msg["leftright"] + "Context  .contextVar." + varName + " .contextItem").length);
+        // add the new divs to the DOM
+        contextElement.html(newContextHTML);
 
+        // now populate the divs
+        for (var i = 0; i < contextLiterals.length; i++) { 
+            var varName = contextLiterals[i][0];
+            var prevContent = $("#" + msg["leftright"] + "Context .contextVar." + varName).html();
+            var newContent = '<div class="contextItem"><i class="fa fa-caret-right"></i> ' +  msg["results"]["literals"][i][1] + "</div>";
+            $("#" + msg["leftright"] + "Context  .contextVar." + varName).html(prevContent + newContent);
+        }
+                
+        // update item counts for all variables
+        for (var i = 0; i < Object.keys(varNameInstances).length; i++) { 
+            var varName = Object.keys(varNameInstances)[i];
+            var instanceCount = varNameInstances[varName];
+            $("#" + msg["leftright"] + "Context  .contextVar." + varName + " .numContextItems").html(instanceCount);
         } 
     })
 });

@@ -218,30 +218,26 @@ def storeBulkConfirm(message):
     #TODO also store information on bulk nature of this all
 
 def handleContextRequest(message):
-   # try:
-        contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
-        contextQuery = contextQuery.format("<" + message["uri"] + ">")
-        sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
-        sparql.setReturnFormat(JSON)
-        sparql.setQuery(contextQuery)
-        print "Ping"
-        try:
-            outcome = sparql.query().convert()
-        except Exception as e: 
-            print "Pang"
-            print "Encountered error trying to execute fetch context query: {0}" + str(e)
-            return
-        pprint(outcome)
-        resultsets = dict()
-        for var in outcome["head"]["vars"]:
-            resultsets[var] = set()
-        for item in outcome["results"]["bindings"]:
-            for var in item.keys():
-                resultsets[var].add(item[var]["value"])
-        results = dict()
-        for var in resultsets.keys():
-            results[var] = list(resultsets[var])
-        return(results)
+    contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
+    contextQuery = contextQuery.format("<" + message["uri"] + ">")
+    sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+    sparql.setReturnFormat(JSON)
+    sparql.setQuery(contextQuery)
+    try:
+        outcome = sparql.query().convert()
+    except Exception as e: 
+        print "Encountered error trying to execute fetch context query: {0}" + str(e)
+        return
+    literals = set()
+    uris = set()
+    print outcome
+    for item in outcome["results"]["bindings"]:
+        for param in item:
+            if item[param]["type"] == "literal":
+                literals.add( (param, item[param]["value"]) )
+            elif item[param]["type"] == "uri":
+                uris.add( (param, item[param]["value"]) )
+    return {"literals": list(literals), "uris":list(uris)}
 
 def sanitize(message) : 
     # sanitize user input
