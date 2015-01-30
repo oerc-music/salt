@@ -219,7 +219,7 @@ def storeBulkConfirm(message):
 
 def handleContextRequest(message):
     contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
-    contextQuery = contextQuery.format("<" + message["uri"] + ">")
+    contextQuery = contextQuery.format("BIND(<" + message["uri"] + "> AS ?uri) .")
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setReturnFormat(JSON)
     sparql.setQuery(contextQuery)
@@ -230,7 +230,6 @@ def handleContextRequest(message):
         return
     literals = set()
     uris = set()
-    print outcome
     for item in outcome["results"]["bindings"]:
         for param in item:
             if item[param]["type"] == "literal":
@@ -262,14 +261,16 @@ def socket_connect(message):
 
 @socketio.on('contextRequest')
 def socket_context_request(message):
-    try: 
-        response = dict()
-        response["leftright"] = message["leftright"]
-        response["results"] = handleContextRequest(message)
-        emit('contextRequestHandled', response);
-        print "Context request handled!"
-    except:
-        emit('contextRequestFailed')
+    if "uri" in message:
+        try: 
+            response = dict()
+            response["leftright"] = message["leftright"]
+            response["results"] = handleContextRequest(message)
+            emit('specificContextRequestHandled', response);
+            print "Specific context request handled!"
+            pprint(response["results"])
+        except:
+            emit('specificContextRequestFailed')
 
 
 if __name__ == '__main__':

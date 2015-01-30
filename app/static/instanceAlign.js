@@ -356,6 +356,8 @@ function refreshLists() {
         // we're done; change icon back from "waiting" to "search"
         $("#search i").removeClass("fa-cog fa-spin").addClass("fa-search");
     }
+    // send off a context request without specifying a URI, to augment the whole list with contextual data
+    socket.emit('contextRequest', {});
 }
 
 function loadMatchesForSelected(leftright, selected) { 
@@ -475,9 +477,11 @@ function revealAnyContextMatches(uri, leftright) {
     $('#'+target+' .scrollitem[title="' + uri + '"]').addClass("contextMatch");
 }
 
+function contextAugmentLists() { 
+    
+}
+
 $(document).ready(function() { 
-    // initialize stuff
-    populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
 
     // set up websocket
     socket=io.connect('http://' + document.domain + ':' + location.port); 
@@ -499,7 +503,13 @@ $(document).ready(function() {
         console.log("Bulk confirm handled: ", msg);
     });
 
-    socket.on('contextRequestHandled', function(msg) { 
+    socket.on('generalContextRequestHandled', function(msg) { 
+        // we've got contextual info for all items of interest; 
+        // go through the lists and augment the items with this context data.
+    });
+
+    socket.on('specificContextRequestHandled', function(msg) { 
+        // we've got contextual info for a specific, selected item
         // remove any previously highlighted context matches (from previous context requests)
         $(".contextMatch").removeClass("contextMatch");
 
@@ -546,4 +556,7 @@ $(document).ready(function() {
             $("#" + msg["leftright"] + "Context  .contextVar." + varName + " .numContextItems").html(instanceCount);
         } 
     })
+    
+    // initialize stuff
+    populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
 });
