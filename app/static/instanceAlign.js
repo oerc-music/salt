@@ -62,6 +62,10 @@ function handleHighlight(leftright) {
                 // on single click: select (highlight) if previously unselected, or unselect if previously selected
                 if(thisElement.hasClass(leftright+'Highlight')) { 
                     thisElement.removeClass(leftright+'Highlight');
+                    // now that we have no selection, clean up any displayed context as well
+                    var target = leftright === "left" ? "right" : "left";
+                    $("#"+target+" .contextMatch").removeClass("contextMatch");
+                    $("#"+leftright+"Context").html("");
                 } else {
                     $('#'+leftright+' .scrollitem').removeClass(leftright+'Highlight');
                     thisElement.addClass(leftright+'Highlight');
@@ -215,7 +219,6 @@ function localStoreConfirmDispute(match, confStatus) {
         fuzz[confStatus] = [match];
     }
 }
-
 
 function handleScoreDisplay() { 
     $('#selectedScore').html('');
@@ -465,6 +468,12 @@ function expandContextItems(thisItem) {
         $(thisItem).find("i").addClass("fa-plus-square-o");
     }
 }
+
+function revealAnyContextMatches(salt_uri, leftright) { 
+    var target = leftright === "left" ? "right" : "left";
+    $('#'+target+' .scrollitem[title="' + salt_uri + '"]').addClass("contextMatch");
+}
+
 $(document).ready(function() { 
     // initialize stuff
     populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
@@ -490,19 +499,37 @@ $(document).ready(function() {
     });
 
     socket.on('contextRequestHandled', function(msg) { 
+        // remove any previously highlighted context matches (from previous context requests)
+        $(".contextMatch").removeClass("contextMatch");
+
         //TODO refactor so we don't loop through the same stuff three times
         console.log("Context request handled: ", msg);
         var contextElement = $("#" + msg["leftright"]  + "Context");
-        var newContextHTML = ""
+        var newContextHTML = "";
+
+        // if any of our context parameters 
+        // look for special salt_uri query parameters that received at least one instantiation on the query:
+        Object.keys(msg["results"]).map( function(x) { 
+                    if(x.substring(0,8) === "salt_uri" && msg["results"][x].length) {
+                        //send them off to be highlighted in the list of scrollitems
+                        revealAnyContextMatches(msg["results"][x], msg["leftright"]);   
+                    }
+        });
+
+        // and filter out the rest, i.e. those that we want to show in the context view
+        var contextItems = Object.keys(msg["results"]).filter(function(x) { 
+                if(x.substring(0,8) !== "salt_uri") return x;
+        });
+        
         // create divs for each type of variable
-        for (var i = 0; i < Object.keys(msg["results"]).length; i++) { 
-            var varName = Object.keys(msg["results"])[i];
+        for (var i = 0; i < contextItems.length; i++) { 
+            var varName = contextItems[i];
             newContextHTML += '<div class="contextVar ' + varName + '">' + '<span class="contextVarHeader" onclick="expandContextItems(this)">' + '<i class="fa fa-plus-square-o"></i> <span class="numContextItems"></span> ' + varName + '</span></div>\n';
         }
         contextElement.html(newContextHTML);
         // populate the divs
-        for (var i = 0; i < Object.keys(msg["results"]).length; i++) { 
-            var varName = Object.keys(msg["results"])[i];
+        for (var i = 0; i < contextItems.length; i++) { 
+            var varName = contextItems[i];
             for(var j = 0; j < msg["results"][varName].length; j++) {
                 var prevContent = $("#" + msg["leftright"] + "Context .contextVar." + varName).html();
                 var newContent = '<div class="contextItem"><i class="fa fa-caret-right"></i> ' +  msg["results"][varName][j] + "</div>";
@@ -511,8 +538,8 @@ $(document).ready(function() {
         }
 
         // update item counts for all variables
-        for (var i = 0; i < Object.keys(msg["results"]).length; i++) { 
-            var varName = Object.keys(msg["results"])[i];
+        for (var i = 0; i < contextItems.length; i++) { 
+            var varName = contextItems[i];
             $("#" + msg["leftright"] + "Context  .contextVar." + varName + " .numContextItems").html($("#" + msg["leftright"] + "Context  .contextVar." + varName + " .contextItem").length);
 
         } 

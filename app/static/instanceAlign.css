@@ -141,6 +141,11 @@
     visibility:hidden !important;
 }
 
+.scrollitem.contextMatch { 
+    font-weight:bold;
+    font-style:italic;
+}
+
 .leftHighlight, .rightHighlight {
     color:#ff0000 !important;
     background: #ffdddd;

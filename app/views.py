@@ -224,7 +224,14 @@ def handleContextRequest(message):
         sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
         sparql.setReturnFormat(JSON)
         sparql.setQuery(contextQuery)
-        outcome = sparql.query().convert()
+        print "Ping"
+        try:
+            outcome = sparql.query().convert()
+        except Exception as e: 
+            print "Pang"
+            print "Encountered error trying to execute fetch context query: {0}" + str(e)
+            return
+        pprint(outcome)
         resultsets = dict()
         for var in outcome["head"]["vars"]:
             resultsets[var] = set()
