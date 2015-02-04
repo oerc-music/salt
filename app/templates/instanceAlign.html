@@ -16,82 +16,85 @@
         <title>SALT: Semantic Alignment Tool</title>
     </head>
     <body>
-        <div id="saltsets">
-            <a href="/"><i class="fa fa-arrow-circle-left"></i> Return to saltset selection screen.</a> Currently comparing <span id="saltsetA"> </span> and <span id="saltsetB"> </span>.         
-        </div>
-        <div class="algselector">
-            <select id="modeSelector" onChange="refreshLists()">
-                <option value="http://127.0.0.1:8890/matchAlgorithm/confirmedMatch">Confirmed by you</option>
-                <option value="http://127.0.0.1:8890/matchAlgorithm/disputedMatch">Disputed by you</option>
-                <option value="http://127.0.0.1:8890/matchAlgorithm/simpleList">Unmatched lists</option>
-                <option selected="selected" value="http://127.0.0.1:8890/matchAlgorithm/exactMatch">Exact matches</option>
-                <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-set-ratio">Token-Set ratio</option>
-                <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-sort-ratio">Token-Sort ratio</option>
-                <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_partial-ratio">Partial ratio</option>
-                <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_simple-ratio">Simple ratio</option>
-            </select>
-        </div>
-        <div id="search">
-            <span id="refresh"><i class="fa fa-refresh" onclick="$('#searchbox').val(''); refreshLists()"></i></span>
-            <input type="text" name="searchbox" id="searchbox"/>
-            <span id="dosearch" onclick="refreshLists()">
-               <i class="fa fa-search"></i> 
-               Search
-            </span>
-            <input type="radio" name="searchmode" value="Left">Left
-            <input type="radio" name="searchmode" value="Right">Right
-            <input type="radio" name="searchmode" checked="checked" value="Both">Both
-        </div>
-        <div class="lockcontrols">
-            <span class="lock lockActive" id="lockright" onClick="if($('#lockright').hasClass('lockActive')) { 
-                                                            handleLocks();
-                                                            scrollLock('right');
-                                                       }">
-                <i class="fa fa-lock fa-2x"></i>
-                <i class="fa fa-arrow-right fa-2x"></i>
-            </span>
-            <span class="lock" id="lockcentre" onClick="if($('#lockcentre').hasClass('lockActive')) { handleLocks(); }">
+        <div id="loadingIndicator"><i class="fa fa-cog fa-spin"></i>Loading, please wait...</div>
+        <div id="interfaceWrapper">
+            <div id="saltsets">
+                <a href="/"><i class="fa fa-arrow-circle-left"></i> Return to saltset selection screen.</a> Currently comparing <span id="saltsetA"> </span> and <span id="saltsetB"> </span>.         
+            </div>
+            <div class="algselector">
+                <select id="modeSelector" onChange="refreshLists()">
+                    <option value="http://127.0.0.1:8890/matchAlgorithm/confirmedMatch">Confirmed by you</option>
+                    <option value="http://127.0.0.1:8890/matchAlgorithm/disputedMatch">Disputed by you</option>
+                    <option value="http://127.0.0.1:8890/matchAlgorithm/simpleList">Unmatched lists</option>
+                    <option selected="selected" value="http://127.0.0.1:8890/matchAlgorithm/exactMatch">Exact matches</option>
+                    <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-set-ratio">Token-Set ratio</option>
+                    <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-sort-ratio">Token-Sort ratio</option>
+                    <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_partial-ratio">Partial ratio</option>
+                    <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_simple-ratio">Simple ratio</option>
+                </select>
+            </div>
+            <div id="search">
+                <span id="refresh"><i class="fa fa-refresh" onclick="$('#searchbox').val(''); refreshLists()"></i></span>
+                <input type="text" name="searchbox" id="searchbox"/>
+                <span id="dosearch" onclick="refreshLists()">
+                   <i class="fa fa-search"></i> 
+                   Search
+                </span>
+                <input type="radio" name="searchmode" value="Left">Left
+                <input type="radio" name="searchmode" value="Right">Right
+                <input type="radio" name="searchmode" checked="checked" value="Both">Both
+            </div>
+            <div class="lockcontrols">
+                <span class="lock lockActive" id="lockright" onClick="if($('#lockright').hasClass('lockActive')) { 
+                                                                handleLocks();
+                                                                scrollLock('right');
+                                                           }">
+                    <i class="fa fa-lock fa-2x"></i>
+                    <i class="fa fa-arrow-right fa-2x"></i>
+                </span>
+                <span class="lock" id="lockcentre" onClick="if($('#lockcentre').hasClass('lockActive')) { handleLocks(); }">
 
-            </span>
-            <span class="lock lockActive" id="lockleft" onClick="if($('#lockleft').hasClass('lockActive')) { 
-                                                            handleLocks();
-                                                            scrollLock('left');
-                                                       }">
-                <i class="fa fa-arrow-left fa-2x"></i>
-                <i class="fa fa-lock fa-2x"></i>
-            </span>
-        </div>
-        <div id="displayWrapper">
-            <div id="listWrapper">
-                <div class="scrollable" id="left">
-                </div>
-                <div class="scrollable" id="right">
-                </div>
-                <div id="scoresWrapper">
-                    <div class="scrollable hiddenScores" id="scores">
+                </span>
+                <span class="lock lockActive" id="lockleft" onClick="if($('#lockleft').hasClass('lockActive')) { 
+                                                                handleLocks();
+                                                                scrollLock('left');
+                                                           }">
+                    <i class="fa fa-arrow-left fa-2x"></i>
+                    <i class="fa fa-lock fa-2x"></i>
+                </span>
+            </div>
+            <div id="displayWrapper">
+                <div id="listWrapper">
+                    <div class="scrollable" id="left">
+                    </div>
+                    <div class="scrollable" id="right">
+                    </div>
+                    <div id="scoresWrapper">
+                        <div class="scrollable hiddenScores" id="scores">
+                        </div>
                     </div>
                 </div>
+                <div id="selectionDisplay">
+                    <span id="leftSelected"></span>
+                    <span id="rightSelected"></span>
+                    <span id="selectedScore"></span>
+                </div>
+                <div id="confirmPanel">
+                    <span id="bulkConfirm">
+                        <i class="fa fa-thumbs-up fa-2x"></i>
+                        <i class="fa fa-list-ol fa-2x"></i>
+                    </span>
+                    <span id="singleConfirmDispute">
+                        <span id="confirmMatch"><i class="fa fa-thumbs-up fa-2x"></i></span>
+                        <span id="disputeMatch"><i class="fa fa-thumbs-down fa-2x"></i></span>
+                    </span>
+                </div>
             </div>
-            <div id="selectionDisplay">
-                <span id="leftSelected"></span>
-                <span id="rightSelected"></span>
-                <span id="selectedScore"></span>
-            </div>
-            <div id="confirmPanel">
-                <span id="bulkConfirm">
-                    <i class="fa fa-thumbs-up fa-2x"></i>
-                    <i class="fa fa-list-ol fa-2x"></i>
-                </span>
-                <span id="singleConfirmDispute">
-                    <span id="confirmMatch"><i class="fa fa-thumbs-up fa-2x"></i></span>
-                    <span id="disputeMatch"><i class="fa fa-thumbs-down fa-2x"></i></span>
-                </span>
-            </div>
-        </div>
-        <div id="contextWrapper">
-            <div id="leftContext"> 
-            </div>
-            <div id="rightContext">
+            <div id="contextWrapper">
+                <div id="leftContext"> 
+                </div>
+                <div id="rightContext">
+                </div>
             </div>
         </div>
         <script>
@@ -102,51 +105,77 @@
             #}
             var fuzz = { 
                 {% set outerDelim = "" %}
+                {# Work through all modes except for the contextual ones, they get special treatment below...#}
                 {% for mode in results.keys() %}
-                    {{outerDelim}}"{{ mode }}": [
-                    {% set innerDelim = "" %} 
-                        {% if mode == 'http://127.0.0.1:8890/matchAlgorithm/simpleList' %}
-                            {% for result in results[mode] %}
-                            {{innerDelim}}{
-                                {% if result["saltset"] == "http://127.0.0.1:8890/saltsets/" ~ request.args.get('saltsetA') %}
-                                   "lefturi": "{{ result["uri"]|safe }}",
-                                   "leftlabel": "{{ result["label"]|safe }}"
-                                {% else %}
-                                   "righturi": "{{ result["uri"]|safe }}",
-                                   "rightlabel": "{{ result["label"]|safe }}"
-                                {% endif %}
-                            }
-                            {% set innerDelim = "," %}
-                            {% endfor %}
-                        {% elif mode in ('http://127.0.0.1:8890/matchAlgorithm/confirmedMatch', 'http://127.0.0.1:8890/matchAlgorithm/disputedMatch') %}
-                             {% for result in results[mode] %}
-                             {{innerDelim}}{
-                                "matchuri": "{{ result["matchuri"]|safe }}",
-                                "lefturi": "{{ result["saltAuri"]|safe }}",
-                                "leftlabel": "{{ result["saltAname"]|safe }}",
-                                "righturi": "{{ result["saltBuri"]|safe }}",
-                                "rightlabel": "{{ result["saltBname"]|safe }}",
-                                "confReason": "{{ result["confReason"]|safe }}"
-                             }
-                             {% set innerDelim = "," %}
-                             {% endfor %}
-                        {% else %}
-                             {% for result in results[mode] %}
-                             {{innerDelim}}{
-                                "matchuri": "{{ result["matchuri"]|safe }}",
-                                "lefturi": "{{ result["saltAuri"]|safe }}",
-                                "leftlabel": "{{ result["saltAname"]|safe }}",
-                                "righturi": "{{ result["saltBuri"]|safe }}",
-                                "rightlabel": "{{ result["saltBname"]|safe }}",
-                                "score": "{{ result["score"]|safe }}"
-                             }
-                             {% set innerDelim = "," %}
-                             {% endfor %}
-                        {% endif %}
-                       ]
-                     {% set outerDelim = "," %}
+                    {% if mode != "saltsetAContext" and mode != "saltsetBContext" %}
+                        {{outerDelim}}"{{ mode }}": [
+                        {% set innerDelim = "" %} 
+                            {% if mode == 'http://127.0.0.1:8890/matchAlgorithm/simpleList' %}
+                                {% for result in results[mode] %} {{innerDelim}}{
+                                    {% if result["saltset"] == "http://127.0.0.1:8890/saltsets/" ~ request.args.get('saltsetA') %}
+                                       "lefturi": "{{ result["uri"]|safe }}",
+                                       "leftlabel": "{{ result["label"]|safe }}"
+                                    {% else %}
+                                       "righturi": "{{ result["uri"]|safe }}",
+                                       "rightlabel": "{{ result["label"]|safe }}"
+                                    {% endif %}
+                                }
+                                {% set innerDelim = "," %}
+                                {% endfor %}
+                            {% elif mode in ('http://127.0.0.1:8890/matchAlgorithm/confirmedMatch', 'http://127.0.0.1:8890/matchAlgorithm/disputedMatch') %}
+                                 {% for result in results[mode] %} {{innerDelim}}{
+                                    "matchuri": "{{ result["matchuri"]|safe }}",
+                                    "lefturi": "{{ result["saltAuri"]|safe }}",
+                                    "leftlabel": "{{ result["saltAname"]|safe }}",
+                                    "righturi": "{{ result["saltBuri"]|safe }}",
+                                    "rightlabel": "{{ result["saltBname"]|safe }}",
+                                    "confReason": "{{ result["confReason"]|safe }}"
+                                 }
+                                 {% set innerDelim = "," %}
+                                 {% endfor %}
+                            {% else %}
+                                 {% for result in results[mode] %} {{innerDelim}}{
+                                    "matchuri": "{{ result["matchuri"]|safe }}",
+                                    "lefturi": "{{ result["saltAuri"]|safe }}",
+                                    "leftlabel": "{{ result["saltAname"]|safe }}",
+                                    "righturi": "{{ result["saltBuri"]|safe }}",
+                                    "rightlabel": "{{ result["saltBname"]|safe }}",
+                                    "score": "{{ result["score"]|safe }}"
+                                 }
+                                 {% set innerDelim = "," %}
+                                 {% endfor %}
+                            {% endif %}
+                           ]
+                         {% set outerDelim = "," %}
+                    {% endif %}
                  {% endfor %}
             }
+            
+            {% for mode in ("saltsetAContext", "saltsetBContext") %}
+            fuzz["{{mode}}"] = {
+            {% set outerDelim = "" %}
+                {% for uri in results[mode] %} 
+                {{outerDelim}}
+                    {% set innerDelim = "" %}
+                    "{{uri}}": { 
+                    {% for param in results[mode][uri] %}
+                        {{ innerDelim }}
+                        "{{ param }}": [
+                            {% set innestDelim = "" %}
+                            {% for entry in results[mode][uri][param] %} 
+                                {{innestDelim}}
+                                "{{ entry }}" 
+                                {% set innestDelim = "," %}
+                            {% endfor %}
+                        ]
+                        {% set innerDelim = "," %}
+                    {% endfor %}
+                    }
+                    
+                    {% set outerDelim = "," %}
+                {% endfor %}
+            };
+            {% endfor %}
         </script>
         </body>
 </html>

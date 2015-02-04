@@ -128,6 +128,7 @@ def instance():
     sparql.setQuery(queryString)
     matchDecisions = sparql.query().convert()
 
+
     # Parse all results into a nice data structure to send to the template:
     # A dict containing keys for each mode (simple list, match algorithm or decision status)
     # Each has a value that is a list of dicts,
@@ -167,6 +168,11 @@ def instance():
             toTemplate[result["decision"]["value"]].append(thisResult)
         else: 
             toTemplate[result["decision"]["value"]] = [thisResult]
+    
+    # Finally, grab all contextual metadata for the URIs in these saltsets
+    toTemplate["saltsetAContext"] = handleContextRequest({"saltset": saltsetA.replace("http://127.0.0.1:8890/saltsets", "")})
+    toTemplate["saltsetBContext"] = handleContextRequest({"saltset": saltsetB.replace("http://127.0.0.1:8890/saltsets", "")})
+
     return render_template('instanceAlign.html', results = toTemplate)
 
 
@@ -219,7 +225,11 @@ def storeBulkConfirm(message):
 
 def handleContextRequest(message):
     contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
-    contextQuery = contextQuery.format("BIND(<" + message["uri"] + "> AS ?uri) .")
+    if "uri" in message: # specific context request - specify the uri we are given
+        contextQuery = contextQuery.format("BIND(<" + message["uri"] + "> AS ?uri) .")
+    else: #general context request - select all uris
+        contextQuery = contextQuery.format("")
+
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setReturnFormat(JSON)
     sparql.setQuery(contextQuery)
@@ -228,22 +238,29 @@ def handleContextRequest(message):
     except Exception as e: 
         print "Encountered error trying to execute fetch context query: {0}" + str(e)
         return
-    literals = set()
-    uris = set()
-    for item in outcome["results"]["bindings"]:
-        for param in item:
-            if item[param]["type"] == "literal":
-                literals.add( (param, item[param]["value"]) )
-            elif item[param]["type"] == "uri":
-                uris.add( (param, item[param]["value"]) )
-    return {"literals": list(literals), "uris":list(uris)}
+    if "uri" in message: #specific context request - return as sets
+        literals = set()
+        uris = set()
+        for item in outcome["results"]["bindings"]:
+            for param in item:
+                if item[param]["type"] == "literal":
+                    literals.add( (param, item[param]["value"]) )
+                elif item[param]["type"] == "uri":
+                    uris.add( (param, item[param]["value"]) )
+        return {"literals": list(literals), "uris":list(uris)}
+    else: #general context request - return uri-keyed dictionary of param:item_set tuples
+        # we are using item sets here in order to achieve distinct values for each parameter
+        results = dict()
+        for item in outcome["results"]["bindings"]:
+            for param in item:
+                if item["uri"]["value"] not in results:
+                    results[item["uri"]["value"]] = dict()
+                if param not in results[item["uri"]["value"]]:
+                    results[item["uri"]["value"]][param] = set()
+                results[item["uri"]["value"]][param].add(item[param]["value"])
+        
+        return results
 
-def sanitize(message) : 
-    # sanitize user input
-    # TODO find a python library that does this properly
-    for key in message:
-        message[key] = str(message[key]).replace("'", "&#39;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;").replace(";", "&#59;");
-    return message
 
 @socketio.on('confirmDisputeEvent')
 def socket_confirmDispute(message):
@@ -259,18 +276,33 @@ def socket_bulkConfirm(message):
 def socket_connect(message):
     print(message)
 
-@socketio.on('contextRequest')
+@socketio.on('specificContextRequest')
 def socket_context_request(message):
-    if "uri" in message:
-        try: 
-            response = dict()
-            response["leftright"] = message["leftright"]
-            response["results"] = handleContextRequest(message)
-            emit('specificContextRequestHandled', response);
-            print "Specific context request handled!"
-            pprint(response["results"])
-        except:
-            emit('specificContextRequestFailed')
+    try: 
+        response = dict()
+        response["leftright"] = message["leftright"]
+        response["results"] = handleContextRequest(message)
+        emit('specificContextRequestHandled', response);
+        print "Specific context request handled!"
+        pprint(response["results"])
+    except:
+        emit('specificContextRequestFailed')
+
+@socketio.on('generalContextRequest')
+def general_context_request(message):
+    response = dict()
+    response["left"] = handleContextRequest({"saltset": message["saltsetA"]});
+    response["right"] = handleContextRequest({"saltset": message["saltsetB"]});
+    emit('generalContextRequestHandled', response)
+
+    
+def sanitize(message) : 
+    # sanitize user input
+    # TODO find a python library that does this properly
+    for key in message:
+        message[key] = str(message[key]).replace("'", "&#39;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;").replace(";", "&#59;");
+    return message
+
 
 
 if __name__ == '__main__':

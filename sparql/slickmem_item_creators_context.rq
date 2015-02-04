@@ -12,4 +12,5 @@ WHERE {{
                 rdfs:label ?in_books .
         ?salt_uri rdfs:label ?makers_of_books .
     }} .
+    FILTER isIRI(?uri) .
 }}

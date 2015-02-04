@@ -146,6 +146,16 @@
     font-style:italic;
 }
 
+.numContextMatches {
+    font-weight: bold;
+}
+
+.numContextMatches i { 
+    color:#ff7700;
+    cursor:pointer;
+}
+
+
 .leftHighlight, .rightHighlight {
     color:#ff0000 !important;
     background: #ffdddd;

@@ -48,13 +48,13 @@ function handleHighlight(leftright) {
         if($(e.target).is("i") || 
             $(e.target).hasClass("unlisted") || 
             $(e.target).parent().hasClass("unlisted") ){ 
-            // if this click event is bubbling up from a click on the eye icon (i.e. the user
-            // wanted to toggle listing/unlisting, not highlighting);
-            // or, if the clicked scrollitem is currently unlisted;
-            // of, if the click was on the internal span of such a scroll item;
-            // do not handle highlighting actions for this event
-            return;
-        }
+                // if this click event is bubbling up from a click on the eye icon (i.e. the user
+                // wanted to toggle listing/unlisting, not highlighting);
+                // or, if the clicked scrollitem is currently unlisted;
+                // of, if the click was on the internal span of such a scroll item;
+                // do not handle highlighting actions for this event
+                return;
+            }
         var thisElement = $(this);
         clicks++; // count clicks
         if(clicks === 1) { 
@@ -62,6 +62,7 @@ function handleHighlight(leftright) {
                 // on single click: select (highlight) if previously unselected, or unselect if previously selected
                 if(thisElement.hasClass(leftright+'Highlight')) { 
                     thisElement.removeClass(leftright+'Highlight');
+                    $('#bulkConfirm').css('display', 'none');
                     // now that we have no selection, clean up any displayed context as well
                     var target = leftright === "left" ? "right" : "left";
                     $("#"+target+" .contextMatch").removeClass("contextMatch");
@@ -69,9 +70,9 @@ function handleHighlight(leftright) {
                 } else {
                     $('#'+leftright+' .scrollitem').removeClass(leftright+'Highlight');
                     thisElement.addClass(leftright+'Highlight');
-                    // call server for context
-                    var saltset = (leftright === "left") ? getParameterByName("saltsetA") : getParameterByName("saltsetB");
-                    socket.emit('contextRequest', {saltset:saltset, uri:thisElement.attr('title'), leftright:leftright});
+                    handleContext(thisElement.attr('title'), leftright);
+                    //var saltset = (leftright === "left") ? getParameterByName("saltsetA") : getParameterByName("saltsetB");
+                    //socket.emit('specificContextRequest', {saltset:saltset, uri:thisElement.attr('title'), leftright:leftright});
                 }
                 $('#'+leftright+'Selected').html('');
                 $('#'+leftright+'Selected').html($('.'+leftright+'Highlight span').html());
@@ -123,7 +124,6 @@ function handleHighlight(leftright) {
 }
 
 function handleConfirmDispute() { 
-
     $('#bulkConfirm').click(function() {
         // identify the URI and saltset on which this bulk-confirm is anchored
         // i.e. the selected item that is being matched to all listed items in the other set
@@ -141,11 +141,11 @@ function handleConfirmDispute() {
             leftright = "right";
             target = "left";
         }
-            
+
         var confMsg = "Bulk-Confirming match between " + $('#'+leftright+'Selected').html() + 
-                      " in the " + leftright + "-hand list and " + $("#" + target + " .scrollitem").not(".unlisted").length
-                      + " active items in the " + target + "-hand list. If you are sure, "+
-                      "please enter a reason below.";
+        " in the " + leftright + "-hand list and " + $("#" + target + " .scrollitem").not(".unlisted").length
+        + " active items in the " + target + "-hand list. If you are sure, "+
+        "please enter a reason below.";
         var confReason = prompt(confMsg);
         if(confReason != null) { 
             // generate matches between the anchor item and each target item
@@ -162,7 +162,7 @@ function handleConfirmDispute() {
                         thisMatch[leftright+"label"] = $('#' + leftright + 'Selected').html(); 
                         thisMatch[target+"label"] = $(targetItem).find('span').html(); 
                         thisMatch["confReason"] = confReason;
-                        
+
                         // remember each match locally
                         localStoreConfirmDispute(thisMatch, confStatus);
                         return thisMatch;
@@ -192,7 +192,7 @@ function handleConfirmDispute() {
             var lefturi = $('.leftHighlight').attr("title");
             var righturi = $('.rightHighlight').attr("title");
             var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
-            
+
             // remember this decision locally
             var thisMatch = {
                 matchuri: aligneduri, 
@@ -270,7 +270,11 @@ function scrollLock(leftright) {
     $('#' + leftright).scrollTop($('#' + reference).scrollTop());
 }
 
-function refreshLists() {
+function refreshLists(contextFilter) {
+    // in case this takes a while... (should be speedy though)
+    $('#loadingIndicator').css("display", "block");
+    $('#interfaceWrapper').css("display", "none");
+    // ... toggle again when we're finished
     // Store the search string as a regex if it exists
     var searchString = $("#searchbox").val();
     var searchRE;
@@ -284,7 +288,10 @@ function refreshLists() {
     $('#leftSelected').html('');
     $('#rightSelected').html('');
     $('#selectedScore').html('');
+    $("#leftContext").html('');
+    $("#rightContext").html('');
     $('#singleConfirmDispute').css("display", "none");
+    $('#bulkConfirm').css("display", "none");
     // ... and adjust style depending on mode.
     modalAdjust();
     // Get the match algorithm (mode) from the selection list
@@ -321,10 +328,11 @@ function refreshLists() {
             altString = "";
         }
         // Populate the left and right list with URIs and labels from the fuzz object
-        // Only include if no search is specified, or the search is being performed on
-        // the other side (leftright), or the regex matches
+        // Only include if not filtered out by contextFilter, and (no search is specified; or the search is being performed on
+        // the other side (leftright); or the regex matches)
         if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') {
-            if(typeof(searchRE) === "undefined" || searchMode === "Right" || searchRE.test(fuzz[mA][match]["leftlabel"])) { 
+            if((typeof(contextFilter) === "undefined" || $.inArray(fuzz[mA][match]["lefturi"], contextFilter) >= 0) &&  
+               (typeof(searchRE) === "undefined" || searchMode === "Right" || searchRE.test(fuzz[mA][match]["leftlabel"]))) { 
                 newLeftHTML += '<div class="scrollitem'+ altString + 
                     '" title="' + fuzz[mA][match]["lefturi"] + '"><span>' + fuzz[mA][match]["leftlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i></div>\n';
             } else if(mode !== "simpleList") { 
@@ -334,12 +342,13 @@ function refreshLists() {
             }
         }
         if(typeof fuzz[mA][match]["righturi"] !== 'undefined') { 
-            if(typeof(searchRE) === "undefined" || searchMode === "Left" || searchRE.test(fuzz[mA][match]["rightlabel"])) { 
+            if((typeof(contextFilter) === "undefined" || $.inArray(fuzz[mA][match]["righturi"], contextFilter) >= 0) &&  
+               (typeof(searchRE) === "undefined" || searchMode === "Left" || searchRE.test(fuzz[mA][match]["rightlabel"]))) { 
                 newRightHTML += '<div class="scrollitem' + altString +
                     '" title="' + fuzz[mA][match]["righturi"] + '"><span>' + fuzz[mA][match]["rightlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i></div>\n';
             } else if (mode !== "simpleList") { 
                 // see above (for left label)
-               continue;
+                continue;
             }
         }   
         if(mode === "displayDecisions") {
@@ -356,8 +365,8 @@ function refreshLists() {
         // we're done; change icon back from "waiting" to "search"
         $("#search i").removeClass("fa-cog fa-spin").addClass("fa-search");
     }
-    // send off a context request without specifying a URI, to augment the whole list with contextual data
-    socket.emit('contextRequest', {});
+    $('#loadingIndicator').css("display", "none");
+    $('#interfaceWrapper').css("display", "block");
 }
 
 function loadMatchesForSelected(leftright, selected) { 
@@ -413,7 +422,7 @@ function modalAdjust() {
     // * Adjust width of score/confReason column
     // * Show or hide lock controls and confirmation panel
     // * Deactivate left / right search when not in simple list mode
-    
+
     // By default, only allow searches on both lists at once
     var radioButtons = $("#search input");
     $(radioButtons[1]).attr("disabled", "disabled"); // left
@@ -455,6 +464,65 @@ function modalAdjust() {
 
 }
 
+function handleContext(uri, leftright) {
+    source = leftright === "left" ? "saltsetAContext" : "saltsetBContext";
+    target = leftright === "left" ? "saltsetBContext" : "saltsetAContext";
+    var contextElement = $("#" + leftright  + "Context");
+    var newContextHTML = "";
+
+    // create divs to display in context view for any context items we find
+    var varNameInstances = {}; // keep count of variables we need to create divs for
+    var contextItems = fuzz[source][uri];
+    if(typeof(contextItems) !== "undefined") {  // allow for context sparql to return nothing
+        for (var contextVar in Object.keys(contextItems)) {
+            var varName = Object.keys(contextItems)[contextVar]; 
+            if (!(varName in varNameInstances)) { 
+                varNameInstances[varName] = 1;
+                // create the div
+                newContextHTML += '<div class="contextVar ' + varName + '">' + '<span class="contextVarHeader" onclick="expandContextItems(this)">' + '<i class="fa fa-plus-square-o"></i> <span class="numContextItems"></span> ' + varName + '</span></div>\n';
+            } else { 
+                // div already create
+                varNameInstances[varName]++;
+            }
+        }
+        // add the new divs to the DOM
+        contextElement.html(newContextHTML);
+
+        // now populate the divs
+        for (var contextVar in Object.keys(contextItems)) {
+            var varName = Object.keys(contextItems)[contextVar]; 
+            var prevContent = $("#" + leftright + "Context .contextVar." + varName).html();
+            var newContent = "";
+            for (var item in fuzz[source][uri][varName]) {
+                contextMatches = findContextMatches(fuzz[source][uri][varName][item], leftright);
+                var numContextMatchesSpan = "";
+                if(contextMatches.length > 0) { 
+                    numContextMatchesSpan = ' <span class="numContextMatches"><i class="fa fa-star"></i> '+contextMatches.length + '</span>';
+                }
+                newContent += '<div class="contextItem"><i class="fa fa-caret-right"></i> ' + '<span class="contextItemContent">' + 
+                    fuzz[source][uri][varName][item] + '</span> ' + numContextMatchesSpan + '</div>';
+            }
+            $("#" + leftright + "Context  .contextVar." + varName).html(prevContent + newContent);
+
+            var instanceCount = $("#" + leftright + "Context  .contextVar." + varName + " .contextItem").length
+                $("#" + leftright + "Context  .contextVar." + varName + " .numContextItems").html(instanceCount);
+
+        }
+
+        // finally, make any context items with context matches clickable...
+            $("#" + leftright + "Context .contextItem").has(".numContextMatches").click(function() { 
+                    filterListsByContext($(this).find(".contextItemContent").html());
+            });
+        // and adjust the cursor to hint at clickability
+            $("#" + leftright + "Context .contextItem").has(".numContextMatches").css("cursor","pointer");
+    }
+}
+
+function filterListsByContext(contextString) { 
+    contextMatches = findContextMatches(contextString, "left").concat(findContextMatches(contextString, "right"))
+    refreshLists(contextMatches);
+}
+
 function expandContextItems(thisItem) { 
     if($(thisItem).find("i").hasClass("fa-plus-square-o")) {
         // we need to expand the items
@@ -473,16 +541,28 @@ function expandContextItems(thisItem) {
 
 function revealAnyContextMatches(uri, leftright) { 
     var target = leftright === "left" ? "right" : "left";
-    console.log(uri);
-    $('#'+target+' .scrollitem[title="' + uri + '"]').addClass("contextMatch");
+    $(".scrollitem").filter(function() { 
+        return ($(this).data("uri") === uri) 
+    }).addClass("contextMatch");
+    //$('#'+target+' .scrollitem[title="' + uri + '"]').addClass("contextMatch");
 }
 
-function contextAugmentLists() { 
-    
+function findContextMatches(contextString, leftright) { 
+    var target = leftright === "left" ? "saltsetBContext" : "saltsetAContext";
+    sharedContextURIs = [];
+    for (var item in fuzz[target]) { 
+        for (var param in fuzz[target][item]) {
+            for (var entry in fuzz[target][item][param]) {
+                if(fuzz[target][item][param][entry] === contextString) { 
+                    sharedContextURIs.push(fuzz[target][item]["uri"][0]);
+                }
+            }
+        }
+    }
+    return(sharedContextURIs);
 }
 
 $(document).ready(function() { 
-
     // set up websocket
     socket=io.connect('http://' + document.domain + ':' + location.port); 
     socket.on('connect', function() { 
@@ -503,60 +583,6 @@ $(document).ready(function() {
         console.log("Bulk confirm handled: ", msg);
     });
 
-    socket.on('generalContextRequestHandled', function(msg) { 
-        // we've got contextual info for all items of interest; 
-        // go through the lists and augment the items with this context data.
-    });
-
-    socket.on('specificContextRequestHandled', function(msg) { 
-        // we've got contextual info for a specific, selected item
-        // remove any previously highlighted context matches (from previous context requests)
-        $(".contextMatch").removeClass("contextMatch");
-
-        console.log("Context request handled: ", msg);
-        var contextElement = $("#" + msg["leftright"]  + "Context");
-        var newContextHTML = "";
-        
-        // reveal any context matches on any URIs we get sent
-        var contextURIs = msg["results"]["uris"];
-        for(var i=0; i<contextURIs.length; i++) { 
-            revealAnyContextMatches(msg["results"]["uris"][i][1], msg["leftright"]);
-        }
-       
-        // now display all the literals we get back in the context view 
-        var varNameInstances = {}; // keep count of variables we need to create divs for
-        var contextLiterals = msg["results"]["literals"];
-        for (var i=0; i < contextLiterals.length; i++) {
-            var varName = contextLiterals[i][0];
-            if (!(varName in varNameInstances)) { 
-                varNameInstances[varName] = 1;
-                // create the div
-                newContextHTML += '<div class="contextVar ' + varName + '">' + '<span class="contextVarHeader" onclick="expandContextItems(this)">' + '<i class="fa fa-plus-square-o"></i> <span class="numContextItems"></span> ' + varName + '</span></div>\n';
-            } else { 
-               // div already create
-                varNameInstances[varName]++;
-            }
-        }
-
-        // add the new divs to the DOM
-        contextElement.html(newContextHTML);
-
-        // now populate the divs
-        for (var i = 0; i < contextLiterals.length; i++) { 
-            var varName = contextLiterals[i][0];
-            var prevContent = $("#" + msg["leftright"] + "Context .contextVar." + varName).html();
-            var newContent = '<div class="contextItem"><i class="fa fa-caret-right"></i> ' +  msg["results"]["literals"][i][1] + "</div>";
-            $("#" + msg["leftright"] + "Context  .contextVar." + varName).html(prevContent + newContent);
-        }
-                
-        // update item counts for all variables
-        for (var i = 0; i < Object.keys(varNameInstances).length; i++) { 
-            var varName = Object.keys(varNameInstances)[i];
-            var instanceCount = varNameInstances[varName];
-            $("#" + msg["leftright"] + "Context  .contextVar." + varName + " .numContextItems").html(instanceCount);
-        } 
-    })
-    
     // initialize stuff
     populateSaltsetIndicators(); handleLocks(); handleScrolling(); refreshLists(); handleConfirmDispute(); 
 });
