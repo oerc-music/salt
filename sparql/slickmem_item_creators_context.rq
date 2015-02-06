@@ -6,10 +6,10 @@ WHERE {{
     {0}
     ?workuri <http://purl.org/vocab/frbr/core#creator> ?uri ;
            rdfs:label ?works .
-    OPTIONAL {{  #item might not be associated with a book...
-        ?workuri dct:isPartOf ?source .
-        ?source foaf:maker ?salt_uri ;
-                rdfs:label ?in_books .
+           ?workuri dct:isPartOf ?source .
+    ?source rdfs:label ?in_books .
+    OPTIONAL {{  #source might not have a maker...
+        ?source foaf:maker ?salt_uri .
         ?salt_uri rdfs:label ?makers_of_books .
     }} .
     FILTER isIRI(?uri) .
