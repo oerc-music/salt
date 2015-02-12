@@ -469,6 +469,8 @@ function handleContext(uri, leftright) {
     target = leftright === "left" ? "saltsetBContext" : "saltsetAContext";
     var contextElement = $("#" + leftright  + "Context");
     var newContextHTML = "";
+    console.log("Peep");
+    $(".scrollitem.contextMatch").removeClass("contextMatch")
 
     // create divs to display in context view for any context items we find
     var varNameInstances = {}; // keep count of variables we need to create divs for
@@ -479,7 +481,7 @@ function handleContext(uri, leftright) {
             if (!(varName in varNameInstances)) { 
                 varNameInstances[varName] = 1;
                 // create the div
-                newContextHTML += '<div class="contextVar ' + varName + '">' + '<span class="contextVarHeader" onclick="expandContextItems(this)">' + '<i class="fa fa-plus-square-o"></i> <span class="numContextItems"></span> ' + varName + '</span></div>\n';
+                newContextHTML += '<div class="contextVar ' + varName + '">' + '<span class="contextVarHeader" onclick="expandContextItems(this)">' + '<i class="fa fa-plus-square-o"></i> <span class="numContextItems"></span> <span class="contextVarName">' + varName + '</span></span></div>\n';
             } else { 
                 // div already create
                 varNameInstances[varName]++;
@@ -509,12 +511,20 @@ function handleContext(uri, leftright) {
 
         }
 
-        // finally, make any context items with context matches clickable...
-            $("#" + leftright + "Context .contextItem").has(".numContextMatches").click(function() { 
-                    filterListsByContext($(this).find(".contextItemContent").html());
-            });
-        // and adjust the cursor to hint at clickability
-            $("#" + leftright + "Context .contextItem").has(".numContextMatches").css("cursor","pointer");
+        // make any context items with context matches clickable...
+        $("#" + leftright + "Context .contextItem").has(".numContextMatches").click(function() { 
+                filterListsByContext($(this).find(".contextItemContent").html());
+        });
+        // adjust the cursor to hint at clickability...
+        $("#" + leftright + "Context .contextItem").has(".numContextMatches").css("cursor","pointer");
+        // and signify in the context var header that there are matches available here
+        $("#" + leftright + "Context .contextVar").has(".numContextMatches").addClass("containsMatches");
+        // default to expanding those with matches
+        expandContextItems($("#" + leftright + "Context .contextVar.containsMatches .contextVarHeader"));
+        
+        // highlight any context matches in the opposite list...
+        revealAnyContextMatches(leftright); 
+
     }
 }
 
@@ -539,17 +549,24 @@ function expandContextItems(thisItem) {
     }
 }
 
-function revealAnyContextMatches(uri, leftright) { 
+function revealAnyContextMatches(leftright) { 
     var target = leftright === "left" ? "right" : "left";
-    $(".scrollitem").filter(function() { 
-        return ($(this).data("uri") === uri) 
-    }).addClass("contextMatch");
-    //$('#'+target+' .scrollitem[title="' + uri + '"]').addClass("contextMatch");
+    var sharedContextURIs = new Array();
+    contextVars = $('#' + leftright + 'Context .contextVar.containsMatches .contextItemContent');
+    for (var contextVar = 0; contextVar < contextVars.length; contextVar++) { 
+        contextMatches = findContextMatches($(contextVars[contextVar]).html(), leftright);
+        for (var c = 0; c < contextMatches.length; c++) { 
+            sharedContextURIs.push(contextMatches[c]);
+        }
+    }
+    for(var uri in sharedContextURIs) { 
+        $('#'+target+' .scrollitem[title="' + sharedContextURIs[uri] + '"]').addClass("contextMatch");
+    }
 }
 
 function findContextMatches(contextString, leftright) { 
     var target = leftright === "left" ? "saltsetBContext" : "saltsetAContext";
-    sharedContextURIs = [];
+    var sharedContextURIs = [];
     for (var item in fuzz[target]) { 
         for (var param in fuzz[target][item]) {
             for (var entry in fuzz[target][item][param]) {

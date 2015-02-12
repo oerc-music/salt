@@ -275,10 +275,15 @@
     font-size: 80%;
 }
 
+.contextVar.containsMatches { 
+    font-weight:bold;
+}
+
 .contextVar .contextItem { 
     margin-left: 30px;
     font-size: 80%;
     display:none;
+    font-weight:normal;
 }
 
 .contextVarHeader { 
