@@ -469,7 +469,6 @@ function handleContext(uri, leftright) {
     target = leftright === "left" ? "saltsetBContext" : "saltsetAContext";
     var contextElement = $("#" + leftright  + "Context");
     var newContextHTML = "";
-    console.log("Peep");
     $(".scrollitem.contextMatch").removeClass("contextMatch")
 
     // create divs to display in context view for any context items we find
@@ -496,13 +495,14 @@ function handleContext(uri, leftright) {
             var prevContent = $("#" + leftright + "Context .contextVar." + varName).html();
             var newContent = "";
             for (var item in fuzz[source][uri][varName]) {
-                contextMatches = findContextMatches(fuzz[source][uri][varName][item], leftright);
+                contextMatches = findContextMatches(fuzz[source][uri][varName][item]["value"], leftright);
                 var numContextMatchesSpan = "";
                 if(contextMatches.length > 0) { 
                     numContextMatchesSpan = ' <span class="numContextMatches"><i class="fa fa-star"></i> '+contextMatches.length + '</span>';
                 }
-                newContent += '<div class="contextItem"><i class="fa fa-caret-right"></i> ' + '<span class="contextItemContent">' + 
-                    fuzz[source][uri][varName][item] + '</span> ' + numContextMatchesSpan + '</div>';
+                var itemTypeIndicator = fuzz[source][uri][varName][item]["type"] === "uri" ? "fa-link" : "fa-terminal";
+                newContent += '<div class="contextItem"><i class="fa ' + itemTypeIndicator + '"></i> ' + '<span class="contextItemContent">' + 
+                    fuzz[source][uri][varName][item]["value"] + '</span> ' + numContextMatchesSpan + '</div>';
             }
             $("#" + leftright + "Context  .contextVar." + varName).html(prevContent + newContent);
 
@@ -536,13 +536,13 @@ function filterListsByContext(contextString) {
 function expandContextItems(thisItem) { 
     if($(thisItem).find("i").hasClass("fa-plus-square-o")) {
         // we need to expand the items
-        $(thisItem).siblings(".contextItem").css("display", "block");
+        $(thisItem).siblings(".contextItem").slideDown("fast");
         // and change the icon to afford contracting rather than expanding
         $(thisItem).find("i").removeClass("fa-plus-square-o");
         $(thisItem).find("i").addClass("fa-minus-square-o");
     } else { 
         // we need to contract the items
-        $(thisItem).siblings(".contextItem").css("display", "none");
+        $(thisItem).siblings(".contextItem").slideUp("fast");
         // and change the icon to afford expanding rather than contracting 
         $(thisItem).find("i").removeClass("fa-minus-square-o");
         $(thisItem).find("i").addClass("fa-plus-square-o");
@@ -570,8 +570,8 @@ function findContextMatches(contextString, leftright) {
     for (var item in fuzz[target]) { 
         for (var param in fuzz[target][item]) {
             for (var entry in fuzz[target][item][param]) {
-                if(fuzz[target][item][param][entry] === contextString) { 
-                    sharedContextURIs.push(fuzz[target][item]["uri"][0]);
+                if(fuzz[target][item][param][entry]["value"] === contextString) { 
+                    sharedContextURIs.push(fuzz[target][item]["uri"][0]["value"]);
                 }
             }
         }

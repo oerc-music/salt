@@ -257,7 +257,7 @@ def handleContextRequest(message):
                     results[item["uri"]["value"]] = dict()
                 if param not in results[item["uri"]["value"]]:
                     results[item["uri"]["value"]][param] = set()
-                results[item["uri"]["value"]][param].add(item[param]["value"])
+                results[item["uri"]["value"]][param].add((item[param]["value"], item[param]["type"]))
         
         return results
 

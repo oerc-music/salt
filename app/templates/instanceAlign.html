@@ -164,7 +164,10 @@
                             {% set innestDelim = "" %}
                             {% for entry in results[mode][uri][param] %} 
                                 {{innestDelim}}
-                                "{{ entry }}" 
+                                {
+                                "value": "{{ entry[0] }}",
+                                "type": "{{ entry[1] }}" 
+                                }
                                 {% set innestDelim = "," %}
                             {% endfor %}
                         ]
