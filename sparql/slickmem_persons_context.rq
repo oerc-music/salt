@@ -5,9 +5,12 @@ PREFIX sim: <http://purl.org/ontology/similarity/>
 SELECT distinct ?uri ?outside_uri ?books
 WHERE {{
     {0} 
+    ?uri <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/slickmem_persons> .
     OPTIONAL {{
     ?slickmem_alignment sim:Subject ?uri ;
-        sim:Object ?outside_uri .
+        sim:Object ?outside_uri ;
+        sim:distance ?distance .
+    FILTER(?distance = "None0None") .
     }} .
     OPTIONAL {{
         ?b foaf:maker ?uri ;
