@@ -143,6 +143,7 @@
 
 .scrollitem.contextMatch { 
     font-style:italic;
+    font-weight: bold;
 }
 
 #left .scrollitem.contextMatch { 
@@ -162,10 +163,16 @@
     cursor:pointer;
 }
 
+.leftHighlight, .rightHighlight { 
+    color:#ffffff !important;
+}
 
-.leftHighlight, .rightHighlight {
-    color:#ff0000 !important;
-    background: #ffdddd;
+.leftHighlight { 
+    background:#669966;
+}
+
+.rightHighlight {
+    background:#666699;
 }
 
 .leftHighlight:hover i, .rightHighlight:hover i { 
