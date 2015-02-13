@@ -142,8 +142,15 @@
 }
 
 .scrollitem.contextMatch { 
-    font-weight:bold;
     font-style:italic;
+}
+
+#left .scrollitem.contextMatch { 
+    color:#333399;
+}
+
+#right .scrollitem.contextMatch { 
+    color:#339933;
 }
 
 .numContextMatches {

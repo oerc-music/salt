@@ -467,9 +467,10 @@ function modalAdjust() {
 function handleContext(uri, leftright) {
     source = leftright === "left" ? "saltsetAContext" : "saltsetBContext";
     target = leftright === "left" ? "saltsetBContext" : "saltsetAContext";
+    targetDirection = leftright === "left" ? "right" : "left";
     var contextElement = $("#" + leftright  + "Context");
     var newContextHTML = "";
-    $(".scrollitem.contextMatch").removeClass("contextMatch")
+    $("#"+targetDirection+" .scrollitem.contextMatch").removeClass("contextMatch")
 
     // create divs to display in context view for any context items we find
     var varNameInstances = {}; // keep count of variables we need to create divs for
