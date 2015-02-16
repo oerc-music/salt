@@ -161,7 +161,7 @@
     text-decoration:underline;
 }
 
-.scrollitem.matchReference i{
+.scrollitem.matchReference .fa-eye, .scrollitem.matchReference .fa-eye-slash{
     visibility:hidden !important;
 }
 
@@ -230,7 +230,7 @@
     background:#666699;
 }
 
-.leftHighlight:hover i, .rightHighlight:hover i { 
+.leftHighlight:hover .fa-eye, .rightHighlight:hover .fa-eye, .leftHighlight:hover .fa-eye-slash, .rightHighlight:hover .fa-eye-slash { 
     visibility:hidden !important;
 }
 
