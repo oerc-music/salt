@@ -297,6 +297,7 @@ function refreshLists(contextFilter) {
     $('#selectedScore').html('');
     $("#leftContext").html('');
     $("#rightContext").html('');
+    $('#confDispMsg').html('');
     $('#singleConfirmDispute').css("display", "none");
     $('#bulkConfirm').css("display", "none");
     // ... and adjust style depending on mode.
