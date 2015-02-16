@@ -195,11 +195,13 @@
 }
 
 .contextHintUp { 
+    position:absolute;
     top:0px;
     display:none;
 }
 
 .contextHintDown { 
+    position:absolute;
     top:22em;
     display:none;
 } 
