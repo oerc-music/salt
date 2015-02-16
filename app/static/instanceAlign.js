@@ -262,32 +262,47 @@ function handleLocks() {
 }
 
 function handleScrolling() { 
-    $('.scrollable').on('scroll', function(e) { 
+    $('.scrollable').on('scroll', function() { 
         if($('#lockcentre').hasClass("lockActive")) {
             //need to synchronize scrolling across both lists
             var top = $(this).scrollTop();
             $('.scrollable').scrollTop(top);
         }
-        
-        // context hinting logic:
-        // if any context matches exist below or above the current scroll view, show the arrow hints
-        // otherwise, hide them
-        var thisList = e.target;
-        var targetList = $(thisList).attr("id") === "left" ? "right" : "left";
-        var topContextMatch = $("#" + targetList + " .scrollitem.contextMatch:not(.unlisted)").first();
-        var bottomContextMatch = $("#" + targetList + " .scrollitem.contextMatch:not(.unlisted)").last();
-        if($(topContextMatch).length && $(topContextMatch).position().top + parseFloat($(topContextMatch).css("font-size")) < 0) { 
-            $("#" + targetList + "ContextHints .contextHintUp").fadeIn(duration=100);
-        } else { 
-            $("#" + targetList + "ContextHints .contextHintUp").fadeOut(duration=100);
-        }
-        if($(bottomContextMatch).length && $(bottomContextMatch).position().top > 400) { 
-            $("#" + targetList + "ContextHints .contextHintDown").fadeIn(duration=100);
-        } else { 
-            $("#" + targetList + "ContextHints .contextHintDown").fadeOut(duration=100);
-        }
+        // now that we have moved scroll bar, check on context hints
+        handleContextHints();   
 
     });
+}
+
+function handleContextHints() { 
+    // context hinting logic:
+    // if any context matches exist below or above the current scroll view, show the arrow hints
+    // otherwise, hide them
+    var topLeftContextMatch = $("#left .scrollitem.contextMatch:not(.unlisted)").first();
+    var bottomLeftContextMatch = $("#left .scrollitem.contextMatch:not(.unlisted)").last();
+    var topRightContextMatch = $("#right .scrollitem.contextMatch:not(.unlisted)").first();
+    var bottomRightContextMatch = $("#right .scrollitem.contextMatch:not(.unlisted)").last();
+    //TODO yuck - refactor
+    if($(topLeftContextMatch).length && $(topLeftContextMatch).position().top + parseFloat($(topLeftContextMatch).css("font-size")) < 0) { 
+        $("#leftContextHints .contextHintUp").fadeIn(duration=100);
+    } else { 
+        $("#leftContextHints .contextHintUp").fadeOut(duration=100);
+    }
+    if($(bottomLeftContextMatch).length && $(bottomLeftContextMatch).position().top > 400) { 
+        $("#leftContextHints .contextHintDown").fadeIn(duration=100);
+    } else { 
+        $("#leftContextHints .contextHintDown").fadeOut(duration=100);
+    }
+    if($(topRightContextMatch).length && $(topRightContextMatch).position().top + parseFloat($(topRightContextMatch).css("font-size")) < 0) { 
+        $("#rightContextHints .contextHintUp").fadeIn(duration=100);
+    } else { 
+        $("#rightContextHints .contextHintUp").fadeOut(duration=100);
+    }
+    if($(bottomRightContextMatch).length && $(bottomRightContextMatch).position().top > 400) { 
+        $("#rightContextHints .contextHintDown").fadeIn(duration=100);
+    } else { 
+        $("#rightContextHints .contextHintDown").fadeOut(duration=100);
+    }
 }
 
 function scrollLock(leftright) {
@@ -619,6 +634,9 @@ function handleContext(uri, leftright) {
         
         // highlight any context matches in the opposite list...
         revealAnyContextMatches(leftright); 
+
+        // and hint up or down if any context matches are scrolled off the visible part of the list
+        handleContextHints();
 
     }
 }

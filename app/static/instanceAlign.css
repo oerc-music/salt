@@ -190,7 +190,7 @@
 .contextHints { 
     position:relative;
     z-index:1;
-    opacity:.6;
+    opacity:.3;
     display:inline;
 }
 
