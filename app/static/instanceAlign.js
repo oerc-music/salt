@@ -418,11 +418,13 @@ function indicateAlreadyConfirmedDisputed() {
         var lefturi = $(leftItems[i]).attr("title");
         var righturi = $(rightItems[i]).attr("title");
         var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+        var found=false;
         if(confirmedMatches.indexOf(aligneduri) > -1) { 
             $(leftItems[i]).addClass("confirmed");
             $(leftItems[i]).children("span").after('<i class="fa fa-thumbs-up">');
             $(rightItems[i]).addClass("confirmed");
             $(rightItems[i]).children("span").after('<i class="fa fa-thumbs-up">');
+            found=true;
         }
 
         if(disputedMatches.indexOf(aligneduri) > -1) { 
@@ -430,6 +432,11 @@ function indicateAlreadyConfirmedDisputed() {
             $(leftItems[i]).children("span").after('<i class="fa fa-thumbs-down">');
             $(rightItems[i]).addClass("disputed");
             $(rightItems[i]).children("span").after('<i class="fa fa-thumbs-down">');
+            found=true;
+        }
+        if(found) {
+            toggleListExclusion($(leftItems[i]).children(".fa-eye, .fa-eye-slash"));
+            toggleListExclusion($(rightItems[i]).children(".fa-eye, .fa-eye-slash"));
         }
     }
 
@@ -678,7 +685,7 @@ $(document).ready(function() {
         var mA = $('#modeSelector').val();
         if(msg["confStatus"] === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch") {
             $("#confirmMatch i").removeClass("fa-cog fa-spin").addClass("fa-thumbs-up");
-            if(modeType === "matching") {
+            if(modeType() === "matching") {
                 $('.scrollitem[title="' + msg['lefturi'] + '"]').addClass('confirmed');
                 $('.scrollitem[title="' + msg['lefturi'] + '"]').children("span").after('<i class="fa fa-thumbs-up">');
                 $('.scrollitem[title="' + msg['righturi'] + '"]').addClass('confirmed');
@@ -686,7 +693,7 @@ $(document).ready(function() {
             }
         } else { 
             $("#disputeMatch i").removeClass("fa-cog fa-spin").addClass("fa-thumbs-down");
-            if(modeType === "matching") { 
+            if(modeType() === "matching") { 
                 $('.scrollitem[title="' + msg['lefturi'] + '"]').addClass('disputed');
                 $('.scrollitem[title="' + msg['lefturi'] + '"]').children("span").after('<i class="fa fa-thumbs-down">');
                 $('.scrollitem[title="' + msg['righturi'] + '"]').addClass('disputed');
