@@ -190,17 +190,18 @@
 .contextHints { 
     position:relative;
     z-index:1;
+    opacity:.6;
     display:inline;
-    opacity:.3;
 }
 
 .contextHintUp { 
     top:0px;
+    display:none;
 }
 
 .contextHintDown { 
     top:22em;
-    left:-50px;
+    display:none;
 } 
 #leftContextHints {
     position:absolute;
@@ -215,10 +216,6 @@
 }
 
 .leftHighlight i, .rightHighlight i {
-    color:#ffffff !important;
-}
-
-.leftHighlight, .rightHighlight { 
     color:#ffffff !important;
 }
 

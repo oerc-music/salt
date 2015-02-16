@@ -1,12 +1,15 @@
 INSERT {
     GRAPH <http://127.0.0.1:8890/EMS> { 
         ?uri <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/ems_composers> ;
-             rdfs:label ?label .
+             rdfs:label ?label ;
+             <http://127.0.0.1:3000/linkedbrainz_uri> ?linkedbrainz_uri .
     }
 }
 WHERE { 
     GRAPH <http://127.0.0.1:8890/EMS> {
         ?uri <http://127.0.0.1:3000/contributorRole> "Composer" ;
-           <http://purl.org/dc/elements/1.1/contributor> ?label .
+           <http://purl.org/dc/elements/1.1/contributor> ?label ;
+           <http://127.0.0.1:3000/musicbrainz_gid> ?mbz_uri .
+        BIND(IRI(CONCAT(STR(?mbz_uri), "#_")) as ?linkedbrainz_uri) .
     }
 }

@@ -262,12 +262,31 @@ function handleLocks() {
 }
 
 function handleScrolling() { 
-    $('.scrollable').on('scroll', function() { 
+    $('.scrollable').on('scroll', function(e) { 
         if($('#lockcentre').hasClass("lockActive")) {
             //need to synchronize scrolling across both lists
             var top = $(this).scrollTop();
             $('.scrollable').scrollTop(top);
         }
+        
+        // context hinting logic:
+        // if any context matches exist below or above the current scroll view, show the arrow hints
+        // otherwise, hide them
+        var thisList = e.target;
+        var targetList = $(thisList).attr("id") === "left" ? "right" : "left";
+        var topContextMatch = $("#" + targetList + " .scrollitem.contextMatch:not(.unlisted)").first();
+        var bottomContextMatch = $("#" + targetList + " .scrollitem.contextMatch:not(.unlisted)").last();
+        if($(topContextMatch).length && $(topContextMatch).position().top + parseFloat($(topContextMatch).css("font-size")) < 0) { 
+            $("#" + targetList + "ContextHints .contextHintUp").fadeIn(duration=100);
+        } else { 
+            $("#" + targetList + "ContextHints .contextHintUp").fadeOut(duration=100);
+        }
+        if($(bottomContextMatch).length && $(bottomContextMatch).position().top > 400) { 
+            $("#" + targetList + "ContextHints .contextHintDown").fadeIn(duration=100);
+        } else { 
+            $("#" + targetList + "ContextHints .contextHintDown").fadeOut(duration=100);
+        }
+
     });
 }
 
@@ -300,6 +319,8 @@ function refreshLists(contextFilter) {
     $('#confDispMsg').html('');
     $('#singleConfirmDispute').css("display", "none");
     $('#bulkConfirm').css("display", "none");
+    $(".contextHintUp").css("display", "none");
+    $(".contextHintDown").css("display", "none");
     // ... and adjust style depending on mode.
     modalAdjust();
     // Get the match algorithm (mode) from the selection list
