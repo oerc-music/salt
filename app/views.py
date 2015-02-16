@@ -270,7 +270,7 @@ def socket_confirmDispute(message):
 @socketio.on("bulkConfirmEvent")
 def socket_bulkConfirm(message):
     storeBulkConfirm(message)
-    emit('bulkConfirmHandled', {message})
+    emit('bulkConfirmHandled', message)
 
 @socketio.on('clientConnectionEvent')
 def socket_connect(message):

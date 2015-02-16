@@ -196,8 +196,8 @@ function handleConfirmDispute() {
                 $(element).removeClass("fa-thumbs-down").addClass("fa-cog fa-spin");
             }// generate the aligned uri (based on left uri + right uri)
 
-            var lefturi = $('.leftHighlight').attr("title");
-            var righturi = $('.rightHighlight').attr("title");
+            var lefturi = $('.leftHighlight, .matchReference').attr("title");
+            var righturi = $('.rightHighlight, .matchReference').attr("title");
             var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
 
             // remember this decision locally
@@ -425,8 +425,8 @@ function getConfDispMsg() {
     console.log("hello ", lefturi, " : ", righturi);
     if(lefturi && righturi) {
         var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
-        var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"]; 
-        var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"]; 
+        var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"] || new Array(); 
+        var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"] || new Array(); 
         var confirmedMatches = confirmed.map(function(x) { return x["matchuri"] });
         var disputedMatches = disputed.map(function(x) { return x["matchuri"] });
         if(confirmedMatches.indexOf(aligneduri) > -1 && disputedMatches.indexOf(aligneduri) > -1) { 
