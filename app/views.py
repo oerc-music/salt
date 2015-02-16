@@ -265,12 +265,12 @@ def handleContextRequest(message):
 @socketio.on('confirmDisputeEvent')
 def socket_confirmDispute(message):
     storeConfirmDispute(message)
-    emit('confirmDisputeHandled', {"confStatus": message["confStatus"]}) 
+    emit('confirmDisputeHandled', message) 
 
 @socketio.on("bulkConfirmEvent")
 def socket_bulkConfirm(message):
     storeBulkConfirm(message)
-    emit('bulkConfirmHandled', {"confStatus": message["confStatus"]})
+    emit('bulkConfirmHandled', {message})
 
 @socketio.on('clientConnectionEvent')
 def socket_connect(message):

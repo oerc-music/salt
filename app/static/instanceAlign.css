@@ -111,25 +111,49 @@
 }
 
 .scrollitem i { 
-    position: absolute;
+    position:absolute;
+    text-decoration:none;
+}
+
+.scrollitem .fa-eye, .scrollitem .fa-eye-slash { 
     left:270px;
     visibility:hidden;
-    text-decoration:none;
     cursor:pointer;
     padding-left:2px;
     padding-right:2px;
+}
+
+.scrollitem .fa-thumbs-up, .scrollitem .fa-thumbs-down { 
+    left:250px;
+    opacity:.3;
+}
+
+.scrollitem .fa-thumbs-up { 
+    color:#339933;
+}
+
+.scrollitem .fa-thumbs-down { 
+    color:#993333;
+}
+
+.scrollitem.confirmed.disputed .fa-thumbs-up { 
+    left:243px;
+}
+
+.scrollitem.confirmed.disputed .fa-thumbs-down {
+    left:257px;
 }
 
 .scrollitem:hover { 
     color:#660000;
 }
 
-.scrollitem:hover i {
+.scrollitem:hover .fa-eye, .scrollitem:hover .fa-eye-slash {
     visibility:visible;
     color:#cccccc;
 }
 
-.scrollitem i:hover { 
+.scrollitem .fa-eye:hover, .scrollitem .fa-eye-slash:hover { 
     color:#000000;
 }
 
@@ -161,6 +185,37 @@
 .numContextMatches i { 
     color:#ff7700;
     cursor:pointer;
+}
+
+.contextHints { 
+    position:relative;
+    z-index:1;
+    display:inline;
+    opacity:.3;
+}
+
+.contextHintUp { 
+    top:0px;
+}
+
+.contextHintDown { 
+    top:22em;
+    left:-50px;
+} 
+#leftContextHints {
+    position:absolute;
+    left:260px;
+    color:#333399;
+}
+
+#rightContextHints { 
+    position:absolute;
+    left:575px;
+    color:#339933;
+}
+
+.leftHighlight i, .rightHighlight i {
+    color:#ffffff !important;
 }
 
 .leftHighlight, .rightHighlight { 
@@ -244,7 +299,6 @@
     display:none;
 }
 
-
 #confirmPanel i { 
     cursor:pointer;
 }
@@ -271,6 +325,11 @@
     color:#ffdddd;
 }
 
+#confDispMsg { 
+    font-size: 1.25em;
+    font-weight:bold;
+    color:#993333;
+}
 
 #leftContext {
    clear:both;

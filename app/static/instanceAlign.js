@@ -79,7 +79,14 @@ function handleHighlight(leftright) {
                 handleScoreDisplay(); 
                 clicks = 0; // reset counter
                 // if both sides have a selection, give option to confirm/dispute
+                // and also indicate whether this has already been confirmed / disputed
+                $("#confDispMsg").css("display", "none");
                 if($('#leftSelected').html() && $('#rightSelected').html()) { 
+                    var confDispMsg = getConfDispMsg();
+                    if(confDispMsg)  {
+                        $("#confDispMsg").html(confDispMsg);
+                        $("#confDispMsg").css("display", "inline");
+                    }
                     $('#singleConfirmDispute').css('display', 'inline');
                     $('#bulkConfirm').css('display', 'none');
                 } else { 
@@ -212,7 +219,7 @@ function handleConfirmDispute() {
 }
 
 function localStoreConfirmDispute(match, confStatus) {
-    console.log("Locally storing " + match["aligneduri"]);
+    console.log("Locally storing ", match);
     if(fuzz[confStatus] !== undefined) { 
         fuzz[confStatus].push(match);
     } else { 
@@ -361,12 +368,70 @@ function refreshLists(contextFilter) {
     rightList.html(newRightHTML);
     scores.html(newScoresHTML);
     handleHighlights();
+    if(mode === 'match') { 
+        // visually indicate any rows that have already been confirmed / disputed previously
+        indicateAlreadyConfirmedDisputed();
+    }
     if(searchString !== "") {
         // we're done; change icon back from "waiting" to "search"
         $("#search i").removeClass("fa-cog fa-spin").addClass("fa-search");
     }
     $('#loadingIndicator').css("display", "none");
     $('#interfaceWrapper').css("display", "block");
+}
+function getConfDispMsg() { 
+    // return a string indicating if a highlighted match already has been confirmed and/or disputed
+    // TODO refactor with the below function to reduce redundancy
+    var confDispMsg = "";
+    var lefturi = $(".leftHighlight").attr("title");
+    var righturi = $(".rightHighlight").attr("title");
+    console.log("hello ", lefturi, " : ", righturi);
+    if(lefturi && righturi) {
+        var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+        var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"]; 
+        var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"]; 
+        var confirmedMatches = confirmed.map(function(x) { return x["matchuri"] });
+        var disputedMatches = disputed.map(function(x) { return x["matchuri"] });
+        if(confirmedMatches.indexOf(aligneduri) > -1 && disputedMatches.indexOf(aligneduri) > -1) { 
+            confDispMsg = "This match has already been confirmed AND disputed.";
+        } else if(confirmedMatches.indexOf(aligneduri) > -1) { 
+            confDispMsg = "This match has already been confirmed.";
+        } else if(disputedMatches.indexOf(aligneduri) > -1) { 
+            confDispMsg = "This match has already been disputed.";
+        }
+        return confDispMsg;
+    }
+}
+function indicateAlreadyConfirmedDisputed() { 
+    // only called in matching modes
+    // visually indicate whether a given row has already been confirmed / disputed
+    // TODO refactor with the above function to reduce redundancy
+    var leftItems = $("#left .scrollitem");
+    var rightItems = $("#right .scrollitem");
+    var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"]; 
+    var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"]; 
+    var confirmedMatches = confirmed.map(function(x) { return x["matchuri"] });
+    var disputedMatches = disputed.map(function(x) { return x["matchuri"] });
+    
+    for (var i = 0; i < leftItems.length; i++) {
+        var lefturi = $(leftItems[i]).attr("title");
+        var righturi = $(rightItems[i]).attr("title");
+        var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+        if(confirmedMatches.indexOf(aligneduri) > -1) { 
+            $(leftItems[i]).addClass("confirmed");
+            $(leftItems[i]).children("span").after('<i class="fa fa-thumbs-up">');
+            $(rightItems[i]).addClass("confirmed");
+            $(rightItems[i]).children("span").after('<i class="fa fa-thumbs-up">');
+        }
+
+        if(disputedMatches.indexOf(aligneduri) > -1) { 
+            $(leftItems[i]).addClass("disputed");
+            $(leftItems[i]).children("span").after('<i class="fa fa-thumbs-down">');
+            $(rightItems[i]).addClass("disputed");
+            $(rightItems[i]).children("span").after('<i class="fa fa-thumbs-down">');
+        }
+    }
+
 }
 
 function loadMatchesForSelected(leftright, selected) { 
@@ -580,6 +645,24 @@ function findContextMatches(contextString, leftright) {
     return(sharedContextURIs);
 }
 
+
+function modeType() { 
+    //TODO refactor code to use this
+    var modeType;
+    var mA = $('#modeSelector').val();
+    if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {  
+        modeType = "confirmDispute";
+    }
+    else if (mA === "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
+        modeType = "simpleList";
+    }
+    else { 
+        modeType = "matching";
+    }
+    
+    return modeType;
+}
+
 $(document).ready(function() { 
     // set up websocket
     socket=io.connect('http://' + document.domain + ':' + location.port); 
@@ -590,10 +673,24 @@ $(document).ready(function() {
 
     // set up websocket handlers
     socket.on('confirmDisputeHandled', function(msg) {
+        console.log("confirmDisputeHandled: ", msg);
+        var mA = $('#modeSelector').val();
         if(msg["confStatus"] === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch") {
             $("#confirmMatch i").removeClass("fa-cog fa-spin").addClass("fa-thumbs-up");
+            if(modeType === "matching") {
+                $('.scrollitem[title="' + msg['lefturi'] + '"]').addClass('confirmed');
+                $('.scrollitem[title="' + msg['lefturi'] + '"]').children("span").after('<i class="fa fa-thumbs-up">');
+                $('.scrollitem[title="' + msg['righturi'] + '"]').addClass('confirmed');
+                $('.scrollitem[title="' + msg['righturi'] + '"]').children("span").after('<i class="fa fa-thumbs-up">');
+            }
         } else { 
             $("#disputeMatch i").removeClass("fa-cog fa-spin").addClass("fa-thumbs-down");
+            if(modeType === "matching") { 
+                $('.scrollitem[title="' + msg['lefturi'] + '"]').addClass('disputed');
+                $('.scrollitem[title="' + msg['lefturi'] + '"]').children("span").after('<i class="fa fa-thumbs-down">');
+                $('.scrollitem[title="' + msg['righturi'] + '"]').addClass('disputed');
+                $('.scrollitem[title="' + msg['righturi'] + '"]').children("span").after('<i class="fa fa-thumbs-down">');
+            }
         }
     });
 
