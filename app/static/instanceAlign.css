@@ -217,6 +217,10 @@
     color:#339933;
 }
 
+.leftHighlight, .rightHighlight { 
+    color:#ffffff !important;
+}
+
 .leftHighlight i, .rightHighlight i {
     color:#ffffff !important;
 }
