@@ -445,8 +445,8 @@ function indicateAlreadyConfirmedDisputed() {
     // TODO refactor with the above function to reduce redundancy
     var leftItems = $("#left .scrollitem");
     var rightItems = $("#right .scrollitem");
-    var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"]; 
-    var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"]; 
+    var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"] || new Array(); 
+    var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"] || new Array(); 
     var confirmedMatches = confirmed.map(function(x) { return x["matchuri"] });
     var disputedMatches = disputed.map(function(x) { return x["matchuri"] });
     
