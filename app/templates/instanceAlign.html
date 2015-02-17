@@ -21,7 +21,7 @@
             <div id="saltsets">
                 <a href="/"><i class="fa fa-arrow-circle-left"></i> Return to saltset selection screen.</a> Currently comparing <span id="saltsetA"> </span> and <span id="saltsetB"> </span>.         
             </div>
-            <div class="algselector">
+            <div id="modeSelectorContainer">
                 <select id="modeSelector" onChange="refreshLists()">
                     <option value="http://127.0.0.1:8890/matchAlgorithm/confirmedMatch">Confirmed by you</option>
                     <option value="http://127.0.0.1:8890/matchAlgorithm/disputedMatch">Disputed by you</option>
@@ -97,6 +97,8 @@
                         <span id="disputeMatch"><i class="fa fa-thumbs-down fa-2x"></i></span>
                     </span>
                     <span id="confDispMsg"></span>
+                </div>
+                <div id="systemMessages">
                 </div>
             </div>
             <div id="contextWrapper">

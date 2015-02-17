@@ -114,6 +114,10 @@ function handleHighlight(leftright) {
                 // reference mode, i.e. return to full lists on both sides)
                 thisElement.click(function() { clicks = 0; refreshLists();  });
                 loadMatchesForSelected(leftright, thisElement.find("span"));
+                // since we now have exactly one match reference on this list,
+                // enable bulk confirms
+                $("#singleConfirmDispute").css("display", "none");
+                $("#bulkConfirm").css("display", "inline");
             }
             clearTimeout(timer); // prevent single-click action
             clicks = 0; // reset counter
@@ -140,11 +144,11 @@ function handleConfirmDispute() {
         var confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
         // user only sees this button if exactly one side has a selection
         if($('#leftSelected').html()) { 
-            anchoruri = $('.leftHighlight').attr("title");
+            anchoruri = $('.leftHighlight').attr("title") || $('.matchReference').attr('title');
             leftright = "left";
             target = "right";
         } else { 
-            anchoruri = $('.rightHighlight').attr("title");
+            anchoruri = $('.rightHighlight').attr("title") || $('.matchReference').attr('title');
             leftright = "right";
             target = "left";
         }
@@ -332,6 +336,7 @@ function refreshLists(contextFilter) {
     $("#leftContext").html('');
     $("#rightContext").html('');
     $('#confDispMsg').html('');
+    $('#systemMessages').css("display", "none");
     $('#singleConfirmDispute').css("display", "none");
     $('#bulkConfirm').css("display", "none");
     $(".contextHintUp").css("display", "none");
@@ -422,7 +427,6 @@ function getConfDispMsg() {
     var confDispMsg = "";
     var lefturi = $(".leftHighlight").attr("title");
     var righturi = $(".rightHighlight").attr("title");
-    console.log("hello ", lefturi, " : ", righturi);
     if(lefturi && righturi) {
         var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
         var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"] || new Array(); 
@@ -482,11 +486,11 @@ function loadMatchesForSelected(leftright, selected) {
     var target = (leftright === "left") ? "right" : "left";
     // user has double clicked on a name (on the left or right)
     // populate the left/rightSelected div appropriately
-    $('#' + leftright +'Selected').html(selected.html())
-        $('#' + target + 'Selected').html("")
-        $('#selectedScore').html("")
-        // load up all matches to that name on the other list
-        var mA = $("#modeSelector").val();
+    $('#' + leftright +'Selected').html(selected.html());
+    $('#' + target + 'Selected').html("");
+    $('#selectedScore').html("");
+    // load up all matches to that name on the other list
+    var mA = $("#modeSelector").val();
     var sourceList = $("#" + leftright);
     var targetList = $("#" + target);
     var scoresList = $("#scores");
@@ -642,8 +646,17 @@ function handleContext(uri, leftright) {
 }
 
 function filterListsByContext(contextString) { 
-    contextMatches = findContextMatches(contextString, "left").concat(findContextMatches(contextString, "right"))
+    contextMatches = findContextMatches(contextString, "left").concat(findContextMatches(contextString, "right"));
+    console.log("context matches: ", contextMatches);
+    var modeChanged = false;
+    if (modeType() !== "simpleList") { 
+       changeMode("http://127.0.0.1:8890/matchAlgorithm/simpleList");
+       modeChanged = true;
+    } 
     refreshLists(contextMatches);
+    if(modeChanged) { 
+        $('#systemMessages').html("<i class='fa fa-exclamation-circle'></i> Mode changed to " + $('#modeSelector option:selected').text()).fadeIn("200")
+    }
 }
 
 function expandContextItems(thisItem) { 
@@ -710,6 +723,12 @@ function modeType() {
     return modeType;
 }
 
+function changeMode(newMode) { 
+    $('#modeSelector').val(newMode);
+    modalAdjust();
+}
+
+
 $(document).ready(function() { 
     // set up websocket
     socket=io.connect('http://' + document.domain + ':' + location.port); 
@@ -743,6 +762,13 @@ $(document).ready(function() {
 
     socket.on('bulkConfirmHandled', function(msg) {
         console.log("Bulk confirm handled: ", msg);
+    });
+
+    $(document).click(function(e) { 
+        // hide any messages on click anywhere but on the triggering contextitem)
+        if(!$(e.target).parents().hasClass("contextItem")){
+            $('#systemMessages').fadeOut("fast");
+        }
     });
 
     // initialize stuff

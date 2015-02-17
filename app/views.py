@@ -270,6 +270,13 @@ def socket_confirmDispute(message):
 @socketio.on("bulkConfirmEvent")
 def socket_bulkConfirm(message):
     storeBulkConfirm(message)
+    for match in message['matches']:
+        match['confStatus'] = message['confStatus']
+        match['confReason'] = message['confReason']
+        match['user'] = message['user']
+        match['timestamp'] = message['timestamp']
+        emit('confirmDisputeHandled', match)
+        print("Pew!")
     emit('bulkConfirmHandled', message)
 
 @socketio.on('clientConnectionEvent')
