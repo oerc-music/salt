@@ -1,8 +1,9 @@
-PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX mo: <http://purl.org/ontology/mo/>
 select ?uri ?works ?role ?musicbrainz where  {{ 
     {0}
-    ?uri dc:identifier ?workuri ; 
+    ?uri dc:contributor ?workuri ; 
         <http://127.0.0.1:3000/contributorRole> ?role ;
-        <http://127.0.0.1:3000/musicbrainz_gid> ?musicbrainz.
+        mo:musicbrainz_guid ?musicbrainz.
     ?workuri dc:title ?works.
 }}

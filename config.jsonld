@@ -1,0 +1,48 @@
+{
+    "@context": { 
+        "@base":      "http://127.0.0.1:8890/",
+        "saltsets":   "http://127.0.0.1:8890/saltsets/",
+        "salt":       "http://127.0.0.1:8890/salt/",
+        "ems":        "http://127.0.0.1:8890/EMS/",
+        "slickmem":   "http://127.0.0.1:8890/slickmem/",
+        "mo":         "http://purl.org/ontology/mo/",
+        "rdfs":       "http://www.w3.org/2000/01/rdf-schema#",
+        "sim":        "http://purl.org/ontology/similarity/"
+    },
+    "rdfs:label":   "Context mapping between two salt sets",
+    "salt:relatesSet": [ 
+        { 
+            "@type":  "salt:saltset", 
+            "@id": "saltsets:ems_persons",
+            "rdfs:label": "Composers featured in the Early Music Show"
+        },
+        {
+            "@type": "salt:saltset",
+            "@id": "saltsets:slickmem_persons",
+            "rdfs:label": "SLICKMEM persons that are foaf:makers of SLICKMEM books"
+        }
+    ],
+    "salt:hasContextItem": [
+        { 
+            "@type": "salt:contextItem",
+            "@id":   "salt:ems_slickmem_musicbrainz",
+            "salt:contextWeighting": "20",
+            "rdfs:label": "musicbrainz",
+            "salt:contextPath": [
+                {
+                    "salt:in_salt_set": {"@id": "saltsets:ems_composers"},
+                    "mo:musicbrainz_guid": { "@id": "_:n1" } 
+                }, 
+                { 
+                    "salt:in_salt_set": { "@id":"saltsets:slickmem_persons"},
+                    "@reverse": {  
+                        "sim:Subject": {
+                            "@type": "sim:Similarity",
+                            "sim:Object": { "@id": "_:n1" }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

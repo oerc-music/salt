@@ -4,6 +4,12 @@ from flask.ext.socketio import SocketIO, emit
 import sys
 from pprint import pprint
 from SPARQLWrapper import SPARQLWrapper, JSON
+from rdflib import Graph, plugin, URIRef, Literal
+from rdflib.parser import Parser
+from rdflib.serializer import Serializer
+import json
+import re
+import uuid
 
 app = Flask(__name__)
 app.debug = True
@@ -15,6 +21,42 @@ socketio = SocketIO(app)
 @app.route('/index')
 def index():
     return render_template("index.html")
+
+@app.route('/config')
+def config():
+    confile = open('config.jsonld')
+    confjson = json.load(confile)
+    confile.close()
+    context = confjson["@context"]
+    contextItem = confjson["salt:hasContextItem"][0]
+    contextItem["@context"] = context
+    g = Graph().parse(data=json.dumps(confjson), format="json-ld")
+    as_triples = g.serialize(format="turtle", context=context)
+    sparql = contextPathsToSPARQL(contextItem["salt:contextPath"], contextItem["salt:contextWeighting"], confjson["@context"]);
+    return render_template('config.html', sparql=sparql, currentConfig=as_triples, jsonConfig = json.dumps(confjson, indent=2) )
+
+
+def contextPathsToSPARQL(cPaths, weight, context):
+    g = Graph().parse(data=json.dumps(cPaths), format="json-ld")
+    as_triples = g.serialize(format="turtle")
+    prefixes = []
+    content = []
+    for line in as_triples.split("\n"):
+        if line.startswith("@prefix"): 
+            matches = re.findall(r'@prefix (\w+:) <(\w+):> .', line)
+            if matches:
+                prefixes.append('PREFIX ' + matches[0][0] + ' <' + context[matches[0][1]]+'>')
+        else: content.append(line)
+    prefixes = "\n".join(prefixes)       
+    content = "\n".join(content)
+    #replace all blank nodes with SPARQL vars
+    content = content.replace("_:", "?")
+    content = re.sub(r"\[\]", lambda x: "?v"+str(uuid.uuid4()).replace("-", ""), content)
+    content = re.sub(r'<([^:>]*):([^>]*)>', lambda x: '<'+context[x.group(1)]+x.group(2)+'>', content)
+    content += "BIND(" + weight + " as ?contextWeighting) .\n"
+    content = "\n\nSELECT * WHERE {" + content + "}"
+    return prefixes + content 
+
 
 @app.route('/dump')
 def dump():
@@ -276,7 +318,6 @@ def socket_bulkConfirm(message):
         match['user'] = message['user']
         match['timestamp'] = message['timestamp']
         emit('confirmDisputeHandled', match)
-        print("Pew!")
     emit('bulkConfirmHandled', message)
 
 @socketio.on('clientConnectionEvent')

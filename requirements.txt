@@ -17,3 +17,5 @@ rdflib>=4.1.2
 six>=1.9.0
 SPARQLWrapper>=1.6.4
 Werkzeug>=0.9.6
+RDFLib-jsonld>=0.2
+uuid>=1.30
