@@ -383,7 +383,7 @@ function refreshLists(contextFilter) {
             if((typeof(contextFilter) === "undefined" || $.inArray(fuzz[mA][match]["lefturi"], contextFilter) >= 0) &&  
                (typeof(searchRE) === "undefined" || searchMode === "Right" || searchRE.test(fuzz[mA][match]["leftlabel"]))) { 
                 newLeftHTML += '<div class="scrollitem'+ altString + 
-                    '" title="' + fuzz[mA][match]["lefturi"] + '"><span>' + fuzz[mA][match]["leftlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i></div>\n';
+                    '" title="' + fuzz[mA][match]["lefturi"] + '"><span>' + fuzz[mA][match]["leftlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i><i class="fa fa-check"></i></div>\n';
             } else if(mode !== "simpleList") { 
                 // if we are in any mode where left matches right (i.e. anything but simpleList)...
                 // ...continue on to next match set and print nothing on either side for this one
@@ -394,7 +394,7 @@ function refreshLists(contextFilter) {
             if((typeof(contextFilter) === "undefined" || $.inArray(fuzz[mA][match]["righturi"], contextFilter) >= 0) &&  
                (typeof(searchRE) === "undefined" || searchMode === "Left" || searchRE.test(fuzz[mA][match]["rightlabel"]))) { 
                 newRightHTML += '<div class="scrollitem' + altString +
-                    '" title="' + fuzz[mA][match]["righturi"] + '"><span>' + fuzz[mA][match]["rightlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i></div>\n';
+                    '" title="' + fuzz[mA][match]["righturi"] + '"><span>' + fuzz[mA][match]["rightlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i><i class="fa fa-check"></i></div>\n';
             } else if (mode !== "simpleList") { 
                 // see above (for left label)
                 continue;
@@ -463,7 +463,7 @@ function indicateAlreadyConfirmedDisputedItems() {
     }
     for (var i = 0; i < allItems.length; i++) { 
         if(decisionedItems.indexOf($(allItems[i]).attr("title")) > -1) { 
-            $(allItems[i]).append('<i class="fa fa-check"></i>');
+            $(allItems[i]).find(".fa-check").css("visibility", "visible");
         }
     }
 }
@@ -784,10 +784,12 @@ $(document).ready(function() {
                 $('.scrollitem[title="' + msg['righturi'] + '"]').children("span").after('<i class="fa fa-thumbs-down">');
             }
         }
+        indicateAlreadyConfirmedDisputedItems();
     });
 
     socket.on('bulkConfirmHandled', function(msg) {
         console.log("Bulk confirm handled: ", msg);
+        indicateAlreadyConfirmedDisputedItems();
     });
 
     $(document).click(function(e) { 

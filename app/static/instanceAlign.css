@@ -139,6 +139,7 @@
 .scrollitem .fa-check { 
     right:0px;
     opacity:.3;
+    visibility:hidden;
 }
 
 .scrollitem.confirmed.disputed .fa-thumbs-up { 
