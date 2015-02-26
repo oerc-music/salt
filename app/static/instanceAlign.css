@@ -136,6 +136,11 @@
     color:#993333;
 }
 
+.scrollitem .fa-check { 
+    right:0px;
+    opacity:.3;
+}
+
 .scrollitem.confirmed.disputed .fa-thumbs-up { 
     left:243px;
 }

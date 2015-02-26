@@ -410,9 +410,13 @@ function refreshLists(contextFilter) {
     rightList.html(newRightHTML);
     scores.html(newScoresHTML);
     handleHighlights();
+    if(mode !== "displayDecisions") { 
+        // visually indicate any items on either side that have been included in at least one match decision previously
+        indicateAlreadyConfirmedDisputedItems();
+    }
     if(mode === 'match') { 
         // visually indicate any rows that have already been confirmed / disputed previously
-        indicateAlreadyConfirmedDisputed();
+        indicateAlreadyConfirmedDisputedRows();
     }
     if(searchString !== "") {
         // we're done; change icon back from "waiting" to "search"
@@ -443,7 +447,29 @@ function getConfDispMsg() {
         return confDispMsg;
     }
 }
-function indicateAlreadyConfirmedDisputed() { 
+
+function indicateAlreadyConfirmedDisputedItems() { 
+    // called in all modes except displayDecisions
+    // visually indicate whether a given item on either list has been included in at least one match decision previously
+    allItems = $.merge($("#left .scrollitem"), $("#right .scrollitem"));
+    var decisioned = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"].concat(
+                     fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"]);
+    var decisionedItems = [];
+    for(var d = 0; d < decisioned.length; d++) { 
+        if(typeof(decisioned[d]) !== "undefined")  {
+            decisionedItems.push(decisioned[d]["lefturi"]);
+            decisionedItems.push(decisioned[d]["righturi"]);
+        }
+    }
+    for (var i = 0; i < allItems.length; i++) { 
+        if(decisionedItems.indexOf($(allItems[i]).attr("title")) > -1) { 
+            $(allItems[i]).append('<i class="fa fa-check"></i>');
+        }
+    }
+}
+    
+
+function indicateAlreadyConfirmedDisputedRows() { 
     // only called in matching modes
     // visually indicate whether a given row has already been confirmed / disputed
     // TODO refactor with the above function to reduce redundancy
