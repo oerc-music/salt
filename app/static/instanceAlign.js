@@ -681,7 +681,7 @@ function filterListsByContext(contextString) {
     } 
     refreshLists(contextMatches);
     if(modeChanged) { 
-        $('#systemMessages').html("<i class='fa fa-exclamation-circle'></i> Mode changed to " + $('#modeSelector option:selected').text()).fadeIn("200")
+        $('#systemMessages').html("<i class='fa fa-exchange'></i> Mode changed to " + $('#modeSelector option:selected').text()).fadeIn("200")
     }
 }
 
