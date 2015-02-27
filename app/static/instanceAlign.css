@@ -116,7 +116,7 @@
 }
 
 .scrollitem .fa-eye, .scrollitem .fa-eye-slash { 
-    left:270px;
+    left:269px;
     visibility:hidden;
     cursor:pointer;
     padding-left:2px;
@@ -137,7 +137,7 @@
 }
 
 .scrollitem .fa-check { 
-    right:0px;
+    right:1px;
     opacity:.3;
     visibility:hidden;
 }

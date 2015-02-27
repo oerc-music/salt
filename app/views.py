@@ -23,18 +23,27 @@ def index():
     return render_template("index.html")
 
 @app.route('/config')
-def config():
+def render_config():
     confile = open('config.jsonld')
     confjson = json.load(confile)
     confile.close()
     context = confjson["@context"]
-    contextItem = confjson["salt:hasContextItem"][0]
+    contextItem = confjson["salt:relation"][0]["salt:hasContextItem"][0]
     contextItem["@context"] = context
     g = Graph().parse(data=json.dumps(confjson), format="json-ld")
     as_triples = g.serialize(format="turtle", context=context)
     sparql = contextPathsToSPARQL(contextItem["salt:contextPath"], contextItem["salt:contextWeighting"], confjson["@context"]);
     return render_template('config.html', sparql=sparql, currentConfig=as_triples, jsonConfig = json.dumps(confjson, indent=2) )
 
+def read_config(): 
+    confile = open('config.jsonld')
+    confjson = json.load(confile)
+    confile.close()
+    context = confjson["@context"]
+    contextItemList = confjson["salt:relation"][0]["salt:hasContextItem"]
+    for contextItem in contextItemList:
+        contextItem["@context"] = context
+    return contextItemList
 
 def contextPathsToSPARQL(cPaths, weight, context):
     g = Graph().parse(data=json.dumps(cPaths), format="json-ld")
@@ -49,13 +58,42 @@ def contextPathsToSPARQL(cPaths, weight, context):
         else: content.append(line)
     prefixes = "\n".join(prefixes)       
     content = "\n".join(content)
+    #replace list item place holders with SPARQL vars
+    content = re.sub(r'<listvar:([^>]+)> a \w+:listItem\s*;\s*\n', lambda x: '?' + x.group(1), content) 
+    content = re.sub(r'<listvar:([^>]+)>', lambda x: '?' + x.group(1), content) 
     #replace all blank nodes with SPARQL vars
     content = content.replace("_:", "?")
-    content = re.sub(r"\[\]", lambda x: "?v"+str(uuid.uuid4()).replace("-", ""), content)
     content = re.sub(r'<([^:>]*):([^>]*)>', lambda x: '<'+context[x.group(1)]+x.group(2)+'>', content)
     content += "BIND(" + weight + " as ?contextWeighting) .\n"
-    content = "\n\nSELECT * WHERE {" + content + "}"
+    content = "\n\nSELECT * WHERE {" + content + "\n}"
     return prefixes + content 
+
+
+def contextSortedItems(saltsetA, saltsetB):
+    saltsetA = saltsetA.replace("http://127.0.0.1:8890/saltsets/", "")
+    saltsetB = saltsetB.replace("http://127.0.0.1:8890/saltsets/", "")
+    sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+    sparql.setReturnFormat(JSON)
+    contextItemList = read_config()
+    allResults = []
+    aggregate = dict()
+    for contextItem in contextItemList:
+        sparql.setQuery(contextPathsToSPARQL(contextItem["salt:contextPath"], contextItem["salt:contextWeighting"], contextItem["@context"]))
+        theseResults = sparql.query().convert()
+        for thisResult in theseResults["results"]["bindings"]:
+            allResults.append(thisResult)
+    for result in allResults:
+        if result[saltsetA] and result[saltsetB]:
+            thisKey = (result[saltsetA]["value"], result[saltsetB]["value"])
+            if thisKey in aggregate:
+                aggregate[thisKey]["contextWeighting"] += float(result["contextWeighting"]["value"])
+            else:
+                aggregate[thisKey] = {saltsetA: result[saltsetA]["value"], saltsetB: result[saltsetB]["value"], "contextWeighting": float(result["contextWeighting"]["value"])}
+    byContextWeighting = sorted(aggregate, key=lambda k: aggregate[k]["contextWeighting"], reverse=True)
+    contextSortedItems = []
+    for ix, item in enumerate(byContextWeighting):
+        contextSortedItems.append((byContextWeighting[ix][0], byContextWeighting[ix][1],aggregate[item]["contextWeighting"]))
+    return contextSortedItems
 
 
 @app.route('/dump')
@@ -150,6 +188,9 @@ def instance():
     sparql.setQuery(queryString)
     stringMatchResults = sparql.query().convert()
 
+    # Now grab all contextual match information for these saltsets, as configured in config.jsonld
+    contextSorted = contextSortedItems(saltsetA, saltsetB)
+
     # Now grab any match decisions (confirmations/disputations) established in previous sessions
     qS = """
     PREFIX : <http://127.0.0.1:8890/>
@@ -169,6 +210,7 @@ def instance():
     queryString = qS.format(saltsetA, saltsetB)
     sparql.setQuery(queryString)
     matchDecisions = sparql.query().convert()
+    
 
 
     # Parse all results into a nice data structure to send to the template:
@@ -197,6 +239,16 @@ def instance():
             toTemplate[result["ma"]["value"]].append(thisResult)
         else:
             toTemplate[result["ma"]["value"]] = [thisResult]
+
+    cSI = "http://127.0.0.1:8890/matchAlgorithm/contextSortedItems"
+    for result in contextSorted:
+        thisResult = { "saltAuri": result[0] ,
+                       "saltBuri": result[1] ,
+                       "score":    result[2] }
+        if cSI in toTemplate:
+            toTemplate[cSI].append(thisResult)
+        else:
+            toTemplate[cSI] = [thisResult]
 
     for result in matchDecisions["results"]["bindings"]:
         thisResult = {"matchuri": result["matchuri"]["value"],
