@@ -88,11 +88,11 @@ def contextSortedItems(saltsetA, saltsetB):
             if thisKey in aggregate:
                 aggregate[thisKey]["contextWeighting"] += float(result["contextWeighting"]["value"])
             else:
-                aggregate[thisKey] = {saltsetA: result[saltsetA]["value"], saltsetB: result[saltsetB]["value"], "contextWeighting": float(result["contextWeighting"]["value"])}
+                aggregate[thisKey] = {saltsetA: result[saltsetA]["value"], "saltsetAlabel": result[saltsetA+"_label"]["value"], saltsetB: result[saltsetB]["value"], "saltsetBlabel": result[saltsetB + "_label"]["value"], "contextWeighting": float(result["contextWeighting"]["value"])}
     byContextWeighting = sorted(aggregate, key=lambda k: aggregate[k]["contextWeighting"], reverse=True)
     contextSortedItems = []
     for ix, item in enumerate(byContextWeighting):
-        contextSortedItems.append((byContextWeighting[ix][0], byContextWeighting[ix][1],aggregate[item]["contextWeighting"]))
+        contextSortedItems.append((byContextWeighting[ix][0], aggregate[item]["saltsetAlabel"], byContextWeighting[ix][1],aggregate[item]["saltsetBlabel"], aggregate[item]["contextWeighting"]))
     return contextSortedItems
 
 
@@ -243,8 +243,10 @@ def instance():
     cSI = "http://127.0.0.1:8890/matchAlgorithm/contextSortedItems"
     for result in contextSorted:
         thisResult = { "saltAuri": result[0] ,
-                       "saltBuri": result[1] ,
-                       "score":    result[2] }
+                       "saltAname": result[1] ,
+                       "saltBuri": result[2],
+                       "saltBname": result[3],
+                       "score":    result[4] }
         if cSI in toTemplate:
             toTemplate[cSI].append(thisResult)
         else:

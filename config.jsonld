@@ -35,17 +35,20 @@
                         {
                             "@id": "listvar:ems_composers",
                             "@type": "salt:listItem",
+                            "rdfs:label": {"@id": "listvar:ems_composers_label"},
                             "salt:in_salt_set": {"@id": "saltsets:ems_composers"},
                             "mo:musicbrainz_guid": { "@id": "_:musicbrainz" } 
                         }, 
                         { 
                             "@id": "listvar:slickmem_persons",
                             "@type": "salt:listItem",
+                            "rdfs:label": {"@id": "listvar:slickmem_persons_label"},
                             "salt:in_salt_set": { "@id":"saltsets:slickmem_persons"},
                             "@reverse": {  
                                 "sim:Subject": {
                                     "@type": "sim:Similarity",
-                                    "sim:Object": { "@id": "_:musicbrainz" }
+                                    "sim:Object": { "@id": "_:musicbrainz" },
+                                    "sim:distance": "None0None"
                                 }
                             }
                         }
