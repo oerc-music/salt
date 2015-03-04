@@ -452,8 +452,9 @@ function indicateAlreadyConfirmedDisputedItems() {
     // called in all modes except displayDecisions
     // visually indicate whether a given item on either list has been included in at least one match decision previously
     allItems = $.merge($("#left .scrollitem"), $("#right .scrollitem"));
-    var decisioned = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"].concat(
-                     fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"]);
+    var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"] || new Array(); 
+    var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"] || new Array(); 
+    var decisioned = confirmed.concat(disputed);
     var decisionedItems = [];
     for(var d = 0; d < decisioned.length; d++) { 
         if(typeof(decisioned[d]) !== "undefined")  {

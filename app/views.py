@@ -83,12 +83,15 @@ def contextSortedItems(saltsetA, saltsetB):
         for thisResult in theseResults["results"]["bindings"]:
             allResults.append(thisResult)
     for result in allResults:
-        if result[saltsetA] and result[saltsetB]:
+        try:
             thisKey = (result[saltsetA]["value"], result[saltsetB]["value"])
             if thisKey in aggregate:
                 aggregate[thisKey]["contextWeighting"] += float(result["contextWeighting"]["value"])
             else:
                 aggregate[thisKey] = {saltsetA: result[saltsetA]["value"], "saltsetAlabel": result[saltsetA+"_label"]["value"], saltsetB: result[saltsetB]["value"], "saltsetBlabel": result[saltsetB + "_label"]["value"], "contextWeighting": float(result["contextWeighting"]["value"])}
+        except KeyError:
+                print "Saltset relation not configured: ", saltsetA, " : ", saltsetB
+                return []
     byContextWeighting = sorted(aggregate, key=lambda k: aggregate[k]["contextWeighting"], reverse=True)
     contextSortedItems = []
     for ix, item in enumerate(byContextWeighting):
