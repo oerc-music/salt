@@ -3,12 +3,16 @@
         "@base":      "http://127.0.0.1:8890/",
         "saltsets":   "http://127.0.0.1:8890/saltsets/",
         "salt":       "http://127.0.0.1:8890/salt/",
-        "listvar":    "http://127.0.0.1:8890/salt/listvar/",
+        "listitem":    "http://127.0.0.1:8890/salt/listitem/",
         "ems":        "http://127.0.0.1:8890/EMS/",
         "slickmem":   "http://127.0.0.1:8890/slickmem/",
         "mo":         "http://purl.org/ontology/mo/",
         "rdfs":       "http://www.w3.org/2000/01/rdf-schema#",
-        "sim":        "http://purl.org/ontology/similarity/"
+        "sim":        "http://purl.org/ontology/similarity/",
+        "dct":        "http://purl.org/dc/terms/",
+        "dc":         "http://purl.org/dc/elements/1.1/",
+        "foaf":       "http://xmlns.com/foaf/0.1/",
+        "frbr":       "http://purl.org/vocab/frbr/core#"
     },
     "salt:relation": [
         {
@@ -16,7 +20,7 @@
             "salt:relatesSet": [ 
                 { 
                     "@type":  "salt:saltset", 
-                    "@id": "saltsets:ems_persons",
+                    "@id": "saltsets:ems_composers",
                     "rdfs:label": "Composers featured in the Early Music Show"
                 },
                 {
@@ -33,22 +37,123 @@
                     "rdfs:label": "musicbrainz",
                     "salt:contextPath": [
                         {
-                            "@id": "listvar:ems_composers",
+                            "@id": "listitem:ems_composers",
                             "@type": "salt:listItem",
-                            "rdfs:label": {"@id": "listvar:ems_composers_label"},
+                            "rdfs:label": {"@id": "listitem:ems_composers_label"},
                             "salt:in_salt_set": {"@id": "saltsets:ems_composers"},
                             "mo:musicbrainz_guid": { "@id": "_:musicbrainz" } 
                         }, 
                         { 
-                            "@id": "listvar:slickmem_persons",
+                            "@id": "listitem:slickmem_persons",
                             "@type": "salt:listItem",
-                            "rdfs:label": {"@id": "listvar:slickmem_persons_label"},
+                            "rdfs:label": {"@id": "listitem:slickmem_persons_label"},
                             "salt:in_salt_set": { "@id":"saltsets:slickmem_persons"},
                             "@reverse": {  
                                 "sim:Subject": {
                                     "@type": "sim:Similarity",
                                     "sim:Object": { "@id": "_:musicbrainz" },
                                     "sim:distance": "None0None"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "rdfs:label":   "Context mapping between salt sets slickmem_persons and slickmem_item_creators",
+            "salt:relatesSet": [ 
+                {
+                    "@type": "salt:saltset",
+                    "@id": "saltsets:slickmem_persons",
+                    "rdfs:label": "SLICKMEM persons that are foaf:makers of SLICKMEM books"
+                },
+                { 
+                    "@type":  "salt:saltset", 
+                    "@id": "saltsets:slickmem_item_creators",
+                    "rdfs:label": "SLICKMEM Composers that are frbr:creators of SLICKMEM items "
+                }
+            ],
+            "salt:hasContextItem": [
+                { 
+                    "@type": "salt:contextItem",
+                    "@id":   "salt:slickmem_persons_slickmem_item_creators_book",
+                    "salt:contextWeighting": "10",
+                    "rdfs:label": "book",
+                    "salt:contextPath": [
+                        {
+                            "@id": "listitem:slickmem_persons",
+                            "@type": "salt:listItem",
+                            "rdfs:label": {"@id": "listitem:slickmem_persons_label"},
+                            "salt:in_salt_set": {"@id": "saltsets:slickmem_persons"},
+                            "@reverse": {
+                                "foaf:maker": { 
+                                    "@id": "_:book" 
+                                }
+                            } 
+                        }, 
+                        { 
+                            "@id": "listitem:slickmem_item_creators",
+                            "@type": "salt:listItem",
+                            "rdfs:label": {"@id": "listitem:slickmem_item_creators_label"},
+                            "salt:in_salt_set": { "@id":"saltsets:slickmem_item_creators"},
+                            "@reverse": {  
+                                "frbr:creator": {
+                                    "@type": "mo:MusicalWork",
+                                    "dct:isPartOf": { "@id": "_:book"}
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "rdfs:label":   "Context mapping between salt sets ems_composers and slickmem_item_creators",
+            "salt:relatesSet": [ 
+                { 
+                    "@type":  "salt:saltset", 
+                    "@id": "saltsets:ems_composers",
+                    "rdfs:label": "Composers featured in the Early Music Show"
+                },
+                { 
+                    "@type":  "salt:saltset", 
+                    "@id": "saltsets:slickmem_item_creators",
+                    "rdfs:label": "SLICKMEM Composers that are frbr:creators of SLICKMEM items "
+                }
+            ],
+            "salt:hasContextItem": [
+                { 
+                    "@type": "salt:contextItem",
+                    "@id":   "salt:ems_slickmem_work",
+                    "salt:contextWeighting": "2",
+                    "rdfs:label": "work",
+                    "salt:contextPath": [
+                        {
+                            "@id": "listitem:ems_composers",
+                            "@type": "salt:listItem",
+                            "rdfs:label": {"@id": "listitem:ems_composers_label"},
+                            "salt:in_salt_set": {"@id": "saltsets:ems_composers"},
+                            "dct:contributor": { 
+                                "@id": "_:emsworkuri",
+                                "dct:title": { 
+                                    "@id": "_:work" 
+                                }
+                            } 
+                        }, 
+                        { 
+                            "@id": "listitem:slickmem_item_creators",
+                            "@type": "salt:listItem",
+                            "rdfs:label": {
+                                "@id": "listitem:slickmem_item_creators_label"
+                            },
+                            "salt:in_salt_set": { "@id":"saltsets:slickmem_item_creators"},
+                            "@reverse": {  
+                                "frbr:creator": {
+                                    "@id": "_:slickworkuri",
+                                    "rdfs:label": { 
+                                        "@id": "_:work" 
+                                    }
                                 }
                             }
                         }

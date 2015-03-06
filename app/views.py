@@ -28,22 +28,31 @@ def render_config():
     confjson = json.load(confile)
     confile.close()
     context = confjson["@context"]
-    contextItem = confjson["salt:relation"][0]["salt:hasContextItem"][0]
-    contextItem["@context"] = context
+    sparql = ""
+    for relation in confjson["salt:relation"]:
+        for contextItem in relation["salt:hasContextItem"]:
+            contextItem["@context"] = context
+            sparql += "\n\n--------\n\n" + contextPathsToSPARQL(contextItem["salt:contextPath"], contextItem["salt:contextWeighting"], confjson["@context"]) 
     g = Graph().parse(data=json.dumps(confjson), format="json-ld")
     as_triples = g.serialize(format="turtle", context=context)
-    sparql = contextPathsToSPARQL(contextItem["salt:contextPath"], contextItem["salt:contextWeighting"], confjson["@context"]);
     return render_template('config.html', sparql=sparql, currentConfig=as_triples, jsonConfig = json.dumps(confjson, indent=2) )
 
-def read_config(): 
+def read_config(saltsetA, saltsetB): 
     confile = open('config.jsonld')
     confjson = json.load(confile)
     confile.close()
     context = confjson["@context"]
-    contextItemList = confjson["salt:relation"][0]["salt:hasContextItem"]
-    for contextItem in contextItemList:
-        contextItem["@context"] = context
-    return contextItemList
+    for relation in confjson["salt:relation"]:
+        relatedSets = list(map(lambda y: y["@id"], relation["salt:relatesSet"]))
+        if "saltsets:"+saltsetA in relatedSets and "saltsets:"+saltsetB in relatedSets:
+            break  # found our relation in the config file
+    try: 
+        contextItemList = relation["salt:hasContextItem"]
+        for contextItem in contextItemList:
+            contextItem["@context"] = context
+        return contextItemList
+    except:
+        return [] # misconfigured
 
 def contextPathsToSPARQL(cPaths, weight, context):
     g = Graph().parse(data=json.dumps(cPaths), format="json-ld")
@@ -59,8 +68,8 @@ def contextPathsToSPARQL(cPaths, weight, context):
     prefixes = "\n".join(prefixes)       
     content = "\n".join(content)
     #replace list item place holders with SPARQL vars
-    content = re.sub(r'<listvar:([^>]+)> a \w+:listItem\s*;\s*\n', lambda x: '?' + x.group(1), content) 
-    content = re.sub(r'<listvar:([^>]+)>', lambda x: '?' + x.group(1), content) 
+    content = re.sub(r'<listitem:([^>]+)> a \w+:listItem\s*;\s*\n', lambda x: '?' + x.group(1), content) 
+    content = re.sub(r'<listitem:([^>]+)>', lambda x: '?' + x.group(1), content) 
     #replace all blank nodes with SPARQL vars
     content = content.replace("_:", "?")
     content = re.sub(r'<([^:>]*):([^>]*)>', lambda x: '<'+context[x.group(1)]+x.group(2)+'>', content)
@@ -74,7 +83,8 @@ def contextSortedItems(saltsetA, saltsetB):
     saltsetB = saltsetB.replace("http://127.0.0.1:8890/saltsets/", "")
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setReturnFormat(JSON)
-    contextItemList = read_config()
+    contextItemList = read_config(saltsetA, saltsetB)
+    
     allResults = []
     aggregate = dict()
     for contextItem in contextItemList:
