@@ -62,6 +62,7 @@ function handleHighlight(leftright) {
                 // on single click: select (highlight) if previously unselected, or unselect if previously selected
                 if(thisElement.hasClass(leftright+'Highlight')) { 
                     thisElement.removeClass(leftright+'Highlight');
+                    $('#rowwiseConfirm').css('display', 'none');
                     $('#bulkConfirm').css('display', 'none');
                     // now that we have no selection, clean up any displayed context as well
                     var target = leftright === "left" ? "right" : "left";
@@ -89,13 +90,18 @@ function handleHighlight(leftright) {
                     }
                     $('#singleConfirmDispute').css('display', 'inline');
                     $('#bulkConfirm').css('display', 'none');
+                    $('#rowwiseConfirm').css('display', 'none');
                 } else { 
                     $('#singleConfirmDispute').css('display', 'none');
                     // if only one side has a selection, give option to bulk confirm
                     if($('#leftSelected').html() || $('#rightSelected').html()) { 
                         $('#bulkConfirm').css('display', 'inline');
+                        $('#rowwiseConfirm').css('display', 'none');
                     } else { 
                         $('#bulkConfirm').css('display', 'none');
+                        if(modeType() === "matching") { 
+                            $('#rowwiseConfirm').css('display', 'inline');
+                        }
                     }
                 }
             }, DELAY);
@@ -178,7 +184,7 @@ function handleConfirmDispute() {
                         localStoreConfirmDispute(thisMatch, confStatus);
                         return thisMatch;
                     });
-            socket.emit('bulkConfirmEvent', {matches: bulkMatches, confStatus: confStatus, confReason: confReason, timestamp: Date.now(), user:userid});
+            socket.emit('bulkConfirmEvent', {matches: bulkMatches, confStatus: confStatus, confReason: confReason, timestamp: Date.now().toString(), user:userid});
         }
     });
 
@@ -217,10 +223,51 @@ function handleConfirmDispute() {
             localStoreConfirmDispute(thisMatch, confStatus);
 
             // and send this decision to the server, for persistent storage
-            socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now(), user:userid});
+            socket.emit('confirmDisputeEvent', {confStatus: confStatus, lefturi: lefturi, righturi: righturi, aligneduri: aligneduri, confReason: confReason, timestamp: Date.now().toString(), user:userid});
         }
     });
-}
+
+    $('#rowwiseConfirm i').click(function(e) { 
+        var leftitems = $("#left .scrollitem");
+        var rightitems = $("#right .scrollitem");
+        var confReason = prompt("About to perform a row-wise bulk confirmation of all rows that do not contain unlisted items on either side.\nPlease enter a reason below.");
+        var confRows = [];
+        var confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"; // TODO in future, also allow row-wise disputes?
+        if(confReason != null) { 
+            for (var i = 0; i < leftitems.length; i++) { 
+                // for each index, confirm a match between both sides at that index
+                // but only if neither side is unlisted
+                // this is only called in matching modes, so we know that the index can be shared safely
+                if($(leftitems[i]).hasClass("unlisted") || $(rightitems[i]).hasClass("unlisted")) { 
+                    // at least one side unlisted; skip this row
+                    continue;
+                }
+                var lefturi = $(leftitems[i]).attr("title");
+                var righturi = $(rightitems[i]).attr("title");
+                var leftlabel = $(leftitems[i]).children("span").html();
+                var rightlabel = $(rightitems[i]).children("span").html();
+                var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+                var thisMatch = {
+                    matchuri: aligneduri,
+                    lefturi: lefturi,
+                    righturi: righturi,
+                    leftlabel: leftlabel,
+                    rightlabel: rightlabel,
+                    confReason:confReason,
+                    confStatus:confStatus
+                }
+                confRows.push(thisMatch);
+            }
+            // send off list of matching rows to the server for persistent storage
+            socket.emit('rowwiseConfirmEvent', {confStatus: confStatus, confRows:confRows, confReason: confReason, timestamp: Date.now().toString(), user:userid});
+            // also remember each row locally:
+            for(var i = 0; i < confRows.length; i++) { 
+                localStoreConfirmDispute(confRows[i], confStatus); // remember decision locally
+            }
+            console.log(confRows);
+        }
+    });
+}       
 
 function localStoreConfirmDispute(match, confStatus) {
     console.log("Locally storing ", match);
@@ -339,6 +386,7 @@ function refreshLists(contextFilter) {
     $('#systemMessages').css("display", "none");
     $('#singleConfirmDispute').css("display", "none");
     $('#bulkConfirm').css("display", "none");
+    $('#rowwiseConfirm').css("display", "none");
     $(".contextHintUp").css("display", "none");
     $(".contextHintDown").css("display", "none");
     // ... and adjust style depending on mode.
@@ -417,6 +465,8 @@ function refreshLists(contextFilter) {
     if(mode === 'match') { 
         // visually indicate any rows that have already been confirmed / disputed previously
         indicateAlreadyConfirmedDisputedRows();
+        // and enable rowwise confirm
+        $("#rowwiseConfirm").css("display", "inline");
     }
     if(searchString !== "") {
         // we're done; change icon back from "waiting" to "search"
@@ -790,6 +840,11 @@ $(document).ready(function() {
 
     socket.on('bulkConfirmHandled', function(msg) {
         console.log("Bulk confirm handled: ", msg);
+        indicateAlreadyConfirmedDisputedItems();
+    });
+
+    socket.on('rowwiseConfirmHandled', function(msg) { 
+        console.log("Row-wise confirm handled: ", msg);
         indicateAlreadyConfirmedDisputedItems();
     });
 

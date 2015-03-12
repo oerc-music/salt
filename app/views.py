@@ -332,6 +332,22 @@ def storeBulkConfirm(message):
         storeConfirmDispute(singleMatch)
     #TODO also store information on bulk nature of this all
 
+def storeRowwiseConfirm(message):
+    for row in message['confRows']:
+        singleMatch = dict()
+        singleMatch['confStatus'] = message['confStatus']
+        singleMatch['confReason'] = message['confReason']
+        singleMatch['user'] = message['user']
+        singleMatch['timestamp'] = message['timestamp']
+        #FIXME - should use consistantly use matchuri or aligneduri across SALT
+        singleMatch['aligneduri'] = row['matchuri']
+        singleMatch['lefturi'] = row['lefturi']
+        singleMatch['leftlabel'] = row['leftlabel']
+        singleMatch['righturi'] = row['righturi']
+        singleMatch['rightlabel'] = row['rightlabel']
+        storeConfirmDispute(singleMatch)
+    #TODO also store information on bulk nature of this all
+
 def handleContextRequest(message):
     contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
     if "uri" in message: # specific context request - specify the uri we are given
@@ -387,6 +403,11 @@ def socket_bulkConfirm(message):
         emit('confirmDisputeHandled', match)
     emit('bulkConfirmHandled', message)
 
+@socketio.on("rowwiseConfirmEvent")
+def socket_rowwiseConfirm(message):
+    storeRowwiseConfirm(message)
+    emit('rowwiseConfirmHandled', message)
+
 @socketio.on('clientConnectionEvent')
 def socket_connect(message):
     print(message)
@@ -415,7 +436,8 @@ def sanitize(message) :
     # sanitize user input
     # TODO find a python library that does this properly
     for key in message:
-        message[key] = str(message[key]).replace("'", "&#39;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;").replace(";", "&#59;");
+        message[key] = message[key].encode('utf-8');
+        message[key] = message[key].replace("'", "&#39;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;").replace("(", "&#40;").replace(")", "&#41;").replace(";", "&#59;");
     return message
 
 
