@@ -3,7 +3,7 @@ PREFIX mo: <http://purl.org/ontology/mo/>
 select ?uri ?works ?role ?musicbrainz where  {{ 
     {0}
     ?uri dc:contributor ?workuri ; 
-        <http://127.0.0.1:3000/contributorRole> ?role ;
+        <http://eeboo.oerc.ox.ac.uk/slobr/ems/contributorRole> ?role ;
         mo:musicbrainz_guid ?musicbrainz.
     ?workuri dc:title ?works.
 }}

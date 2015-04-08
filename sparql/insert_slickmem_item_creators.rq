@@ -1,20 +1,19 @@
 PREFIX mo: <http://purl.org/ontology/mo/>
 PREFIX frbr: <http://purl.org/vocab/frbr/core#>
 PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX slobr: <http://127.0.0.1:8890/slobr/>
-PREFIX slickmem: <http://127.0.0.1:8890/slickmem/>
-PREFIX ems: <http://127.0.0.1:8890/EMS/>
+PREFIX slobr: <http://eeboo.oerc.ox.ac.uk/slobr/>
+PREFIX slickmem: <http://eeboo.oerc.ox.ac.uk/slickmem/>
 INSERT {
-    GRAPH <http://127.0.0.1:8890/slickmem_item_creators> { 
+    GRAPH <http://eeboo.oerc.ox.ac.uk/slickmem_item_creators> { 
         ?workuri rdfs:subClassOf slobr:Work ; 
                  frbr:creator ?creatoruri .
         ?creatoruri rdfs:label ?creatorname ;
                     a slickmem:Composer ;
-                    <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/slickmem_item_creators> .
+                    <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <http://eeboo.oerc.ox.ac.uk/saltsets/slickmem_item_creators> .
     }
 }
 WHERE { 
-    GRAPH  <http://127.0.0.1:8890/slickmem> {
+    GRAPH  <http://eeboo.oerc.ox.ac.uk/slickmem> {
      ?workuri a mo:MusicalWork ;
               dct:title ?worktitle;
               frbr:creator ?creatorname .

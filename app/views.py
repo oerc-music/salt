@@ -114,15 +114,18 @@ def contextPathsToSPARQL(cPaths, weight, context):
     content = re.sub(r'<listitem:([^>]+)>', lambda x: '?' + x.group(1), content) 
     #replace all blank nodes with SPARQL vars
     content = content.replace("_:", "?")
-    content = re.sub(r'<([^:>]*):([^>]*)>', lambda x: '<'+context[x.group(1)]+x.group(2)+'>', content)
+    try:
+	content = re.sub(r'<([^:>]*):([^>]*)>', lambda x: '<'+context[x.group(1)]+x.group(2)+'>', content)
+    except:
+	content
     content += "BIND(" + weight + " as ?contextWeighting) .\n"
     content = "\n\nSELECT * WHERE {" + content + "\n}"
     return prefixes + content 
 
 
 def contextSortedItems(saltsetA, saltsetB):
-    saltsetA = saltsetA.replace("http://127.0.0.1:8890/saltsets/", "")
-    saltsetB = saltsetB.replace("http://127.0.0.1:8890/saltsets/", "")
+    saltsetA = saltsetA.replace("http://eeboo.oerc.ox.ac.uk/saltsets/", "").replace("-","")
+    saltsetB = saltsetB.replace("http://eeboo.oerc.ox.ac.uk/saltsets/", "").replace("-","")
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setReturnFormat(JSON)
     contextItemList = read_config(saltsetA, saltsetB)

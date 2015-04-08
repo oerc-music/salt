@@ -1,7 +1,7 @@
 SELECT DISTINCT ?uri ?label
 WHERE { 
-    GRAPH <http://127.0.0.1:8890/EMS> {
+    GRAPH <http://eeboo.oerc.ox.ac.uk/EMS> {
         ?uri rdfs:label ?label ;
-           <http://127.0.0.1:8890/salt/in_salt_set> <http://127.0.0.1:8890/saltsets/ems_composers>
+           <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <http://eeboo.oerc.ox.ac.uk/saltsets/ems_composers>
     }
 }

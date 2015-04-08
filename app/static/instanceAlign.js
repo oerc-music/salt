@@ -21,7 +21,7 @@ function populateSaltsetIndicators() {
 function handleHighlights() {
     var mA = $('#modeSelector').val();
     // if we are in a mode that requires highlighting:
-    if(mA !== "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" && mA !== "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
+    if(mA !== "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch" && mA !== "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch") { 
         // indicate to user that they can click on scrollitems
         $('.scrollitem').css("cursor", "pointer"); 
         // handle the highlighting and display-selected logic:
@@ -105,7 +105,7 @@ function handleHighlight(leftright) {
             // on double click: clear this list, retain the double clicked element,
             // and call loadMatchesForSelected to load up matches on the other list
             // .. but only if we are in a matching mode (i.e. anything but simplelist)
-            if($("#modeSelector").val() !== "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
+            if($("#modeSelector").val() !== "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/simpleList") { 
                 $('#'+leftright+' .scrollitem').removeClass(leftright+'Highlight');
                 $('#'+leftright+' .scrollitem').css('display', 'none');
                 thisElement.css('display', 'initial');
@@ -143,7 +143,7 @@ function handleConfirmDispute() {
         var anchoruri;
         var target;
         var leftright;
-        var confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
+        var confStatus = "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch";
         // user only sees this button if exactly one side has a selection
         if($('#leftSelected').html()) { 
             anchoruri = $('.leftHighlight').attr("title") || $('.matchReference').attr('title');
@@ -165,7 +165,7 @@ function handleConfirmDispute() {
             var bulkMatches = $.map($("#"+target+" .scrollitem").not(".unlisted"), 
                     function(targetItem) {
                         var targeturi = $(targetItem).attr("title") ;
-                        var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + anchoruri.replace("http://", "").replace(/\//g, "__") + "___" + targeturi.replace("http://", "").replace(/\//g, "__");
+                        var aligneduri = "http://eeboo.oerc.ox.ac.uk/matchDecisions/" + anchoruri.replace("http://", "").replace(/\//g, "__") + "___" + targeturi.replace("http://", "").replace(/\//g, "__");
                         // set up this match. Why use the longwinded syntax instead of nice JSON? 
                         // Because JavaScript. See http://www.unethicalblogger.com/2008/03/21/javascript-wonks-missing-after-property-id.html
                         var thisMatch = {};
@@ -192,19 +192,19 @@ function handleConfirmDispute() {
         if(confReason != null) { 
             // indicate that we're talking to the server and waiting for a response
             if ($(element).hasClass("fa-thumbs-up")) {
-                confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch";
+                confStatus = "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch";
                 confMsg = "Confirm match: ";
                 $(element).removeClass("fa-thumbs-up").addClass("fa-cog fa-spin");
 
             } else { 
-                confStatus = "http://127.0.0.1:8890/matchAlgorithm/disputedMatch";
+                confStatus = "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch";
                 confMsg = "Dispute match: ";
                 $(element).removeClass("fa-thumbs-down").addClass("fa-cog fa-spin");
             }// generate the aligned uri (based on left uri + right uri)
 
             var lefturi = $('.leftHighlight, .matchReference').attr("title");
             var righturi = $('.rightHighlight, .matchReference').attr("title");
-            var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+            var aligneduri = "http://eeboo.oerc.ox.ac.uk/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
 
             // remember this decision locally
             var thisMatch = {
@@ -228,7 +228,7 @@ function handleConfirmDispute() {
         var rightitems = $("#right .scrollitem");
         var confReason = prompt("About to perform a row-wise bulk confirmation of all rows that do not contain unlisted items on either side.\nPlease enter a reason below.");
         var confRows = [];
-        var confStatus = "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"; // TODO in future, also allow row-wise disputes?
+        var confStatus = "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch"; // TODO in future, also allow row-wise disputes?
         if(confReason != null) { 
             for (var i = 0; i < leftitems.length; i++) { 
                 // for each index, confirm a match between both sides at that index
@@ -242,7 +242,7 @@ function handleConfirmDispute() {
                 var righturi = $(rightitems[i]).attr("title");
                 var leftlabel = $(leftitems[i]).children("span").html();
                 var rightlabel = $(rightitems[i]).children("span").html();
-                var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+                var aligneduri = "http://eeboo.oerc.ox.ac.uk/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
                 var thisMatch = {
                     matchuri: aligneduri,
                     lefturi: lefturi,
@@ -286,7 +286,7 @@ function handleScoreDisplay() {
         for(var match in fuzz[mA])  {
             if(fuzz[mA][match]["leftlabel"] === leftSel && 
                     fuzz[mA][match]["rightlabel"] === rightSel) { 
-                        if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") { 
+                        if(mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch" || mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch") { 
                             $('#selectedScore').html(fuzz[mA][match]["confReason"])
                         } else { 
                             $('#selectedScore').html(fuzz[mA][match]["score"]);
@@ -390,10 +390,10 @@ function refreshLists(contextFilter) {
     // Get the match algorithm (mode) from the selection list
     var mA = $("#modeSelector").val();
     var mode;
-    if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {
+    if(mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch" || mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch") {
         mode = "displayDecisions";
     }
-    else if (mA == "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
+    else if (mA == "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/simpleList") { 
         mode = "simpleList";
     }
     else { 
@@ -478,9 +478,9 @@ function getConfDispMsg() {
     var lefturi = $(".leftHighlight").attr("title");
     var righturi = $(".rightHighlight").attr("title");
     if(lefturi && righturi) {
-        var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
-        var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"] || new Array(); 
-        var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"] || new Array(); 
+        var aligneduri = "http://eeboo.oerc.ox.ac.uk/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+        var confirmed = fuzz["http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch"] || new Array(); 
+        var disputed = fuzz["http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch"] || new Array(); 
         var confirmedMatches = confirmed.map(function(x) { return x["matchuri"] });
         var disputedMatches = disputed.map(function(x) { return x["matchuri"] });
         if(confirmedMatches.indexOf(aligneduri) > -1 && disputedMatches.indexOf(aligneduri) > -1) { 
@@ -498,8 +498,8 @@ function indicateAlreadyConfirmedDisputedItems() {
     // called in all modes except displayDecisions
     // visually indicate whether a given item on either list has been included in at least one match decision previously
     allItems = $.merge($("#left .scrollitem"), $("#right .scrollitem"));
-    var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"] || new Array(); 
-    var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"] || new Array(); 
+    var confirmed = fuzz["http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch"] || new Array(); 
+    var disputed = fuzz["http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch"] || new Array(); 
     var decisioned = confirmed.concat(disputed);
     var decisionedItems = [];
     for(var d = 0; d < decisioned.length; d++) { 
@@ -522,15 +522,15 @@ function indicateAlreadyConfirmedDisputedRows() {
     // TODO refactor with the above function to reduce redundancy
     var leftItems = $("#left .scrollitem");
     var rightItems = $("#right .scrollitem");
-    var confirmed = fuzz["http://127.0.0.1:8890/matchAlgorithm/confirmedMatch"] || new Array(); 
-    var disputed = fuzz["http://127.0.0.1:8890/matchAlgorithm/disputedMatch"] || new Array(); 
+    var confirmed = fuzz["http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch"] || new Array(); 
+    var disputed = fuzz["http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch"] || new Array(); 
     var confirmedMatches = confirmed.map(function(x) { return x["matchuri"] });
     var disputedMatches = disputed.map(function(x) { return x["matchuri"] });
     
     for (var i = 0; i < leftItems.length; i++) {
         var lefturi = $(leftItems[i]).attr("title");
         var righturi = $(rightItems[i]).attr("title");
-        var aligneduri = "http://127.0.0.1:8890/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
+        var aligneduri = "http://eeboo.oerc.ox.ac.uk/matchDecisions/" + lefturi.replace("http://", "").replace(/\//g, "__") + "___" + righturi.replace("http://", "").replace(/\//g, "__");
         var found=false;
         if(confirmedMatches.indexOf(aligneduri) > -1) { 
             $(leftItems[i]).addClass("confirmed");
@@ -615,7 +615,7 @@ function modalAdjust() {
     $(radioButtons[2]).attr("disabled", "disabled"); // right
 
     var mA = $('#modeSelector').val();
-    if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {  
+    if(mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch" || mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch") {  
         $('#scores').css("width", "370px");
         $('#scores').css("display", "block");
         $('.lockcontrols').css('visibility', 'hidden');
@@ -625,7 +625,7 @@ function modalAdjust() {
         }
         $(radioButtons[3]).prop("checked", true); // make sure Both is selected
     }
-    else if (mA === "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
+    else if (mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/simpleList") { 
         // no scores to display on an unmatched simple listing...
         $('#scores').css("display", "none");
         // since the lists aren't matched, locked scrolling makes no sense in this mode
@@ -723,7 +723,7 @@ function filterListsByContext(contextString) {
     console.log("context matches: ", contextMatches);
     var modeChanged = false;
     if (modeType() !== "simpleList") { 
-       changeMode("http://127.0.0.1:8890/matchAlgorithm/simpleList");
+       changeMode("http://eeboo.oerc.ox.ac.uk/matchAlgorithm/simpleList");
        modeChanged = true;
     } 
     refreshLists(contextMatches);
@@ -783,10 +783,10 @@ function modeType() {
     //TODO refactor code to use this
     var modeType;
     var mA = $('#modeSelector').val();
-    if(mA === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch" || mA === "http://127.0.0.1:8890/matchAlgorithm/disputedMatch") {  
+    if(mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch" || mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/disputedMatch") {  
         modeType = "confirmDispute";
     }
-    else if (mA === "http://127.0.0.1:8890/matchAlgorithm/simpleList") { 
+    else if (mA === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/simpleList") { 
         modeType = "simpleList";
     }
     else { 
@@ -814,7 +814,7 @@ $(document).ready(function() {
     socket.on('confirmDisputeHandled', function(msg) {
         console.log("confirmDisputeHandled: ", msg);
         var mA = $('#modeSelector').val();
-        if(msg["confStatus"] === "http://127.0.0.1:8890/matchAlgorithm/confirmedMatch") {
+        if(msg["confStatus"] === "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/confirmedMatch") {
             $("#confirmMatch i").removeClass("fa-cog fa-spin").addClass("fa-thumbs-up");
             if(modeType() === "matching") {
                 $('.scrollitem[title="' + msg['lefturi'] + '"]').addClass('confirmed');
