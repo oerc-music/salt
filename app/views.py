@@ -1,6 +1,7 @@
 #from app import app
-from flask import Flask, render_template, Markup, request
+from flask import Flask, Response, render_template, Markup, request
 from flask.ext.socketio import SocketIO, emit
+from flask.ext.login import LoginManager, UserMixin, login_required, login_user, current_user
 import sys
 from pprint import pprint
 from SPARQLWrapper import SPARQLWrapper, JSON
@@ -15,12 +16,53 @@ app = Flask(__name__)
 app.debug = True
 ***REMOVED***
 
+login_manager = LoginManager()
+login_manager.init_app(app)
 socketio = SocketIO(app)
+
+class User(UserMixin):
+    # user auth stuff taken from http://gouthamanbalaraman.com/blog/minimal-flask-login-example.html
+    # proxy for a proper database of users, with salted password hashes etc
+    user_database = { 
+***REMOVED***
+        "DavidLewis": ("DavidLewis","SogNeybDaf")
+    }
+    
+    def __init__(self, username, password):
+        self.id = username
+        self.password = password
+
+    @classmethod
+    def get(cls, id):
+        return cls.user_database.get(id)
+
+@login_manager.request_loader
+def load_user(request):
+    token = request.cookies.get('token')
+    print "cookies: ", request.cookies
+    if token is None:
+        token = request.headers.get('Authorization')
+    if token is None:
+        token = request.args.get('token')
+    if token is not None:
+        username,password = token.split(":") # naive token
+        user_entry = User.get(username)
+        if(user_entry is not None):
+            user = User(user_entry[0],user_entry[1])
+            if(user.password == password):
+                return user
+    return None
+
 
 @app.route('/')
 @app.route('/index')
+@login_required
 def index():
-    return render_template("index.html")
+    response = app.make_response(render_template("index.html"))
+    token = current_user.id + ":" + current_user.password
+    print "Setting token: ", token
+    response.set_cookie('token', token)
+    return response
 
 @app.route('/config')
 def render_config():
@@ -150,6 +192,7 @@ def dump():
 
 @app.route('/instance', methods=["GET"])
 @app.route('/salt', methods=["GET"])
+@login_required
 def instance():
     if request.args.get('saltsetA') is None or request.args.get('saltsetB') is None:
         return render_template('index.html')
