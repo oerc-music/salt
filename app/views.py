@@ -325,7 +325,7 @@ def instance():
     toTemplate["saltsetAContext"] = handleContextRequest({"saltset": saltsetA.replace("http://127.0.0.1:8890/saltsets", "")})
     toTemplate["saltsetBContext"] = handleContextRequest({"saltset": saltsetB.replace("http://127.0.0.1:8890/saltsets", "")})
 
-    return render_template('instanceAlign.html', results = toTemplate)
+    return render_template('instanceAlign.html', results = toTemplate, userid=current_user.id)
 
 
 def storeConfirmDispute(message):

@@ -1,7 +1,3 @@
-// TODO Determine this through authentication!
-var userid = "testuser";
-
-
 // variables to differentiate between single and dblclicks in the handleHighlight function
 var DELAY = 250, clicks = 0, timer = null;
 

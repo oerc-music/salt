@@ -115,6 +115,9 @@
             </div>
         </div>
         <script>
+            {# supply the userid determined by the webserver from cookie or query parameter #}
+            var userid = "{{ userid }}"
+
             {# build the JSON object that corresponds to our SPARQL results
                Note: the outer/inner Delim business is simply there because
                the JSON spec does not allow for trailing commas -- so we
