@@ -13,7 +13,7 @@ import re
 import uuid
 
 app = Flask(__name__)
-app.debug = True
+app.debug = False
 ***REMOVED***
 
 login_manager = LoginManager()
@@ -25,7 +25,8 @@ class User(UserMixin):
     # proxy for a proper database of users, with salted password hashes etc
     user_database = { 
 ***REMOVED***
-        "DavidLewis": ("DavidLewis","SogNeybDaf")
+***REMOVED***
+	"demo": ("demo", "demo")
     }
     
     def __init__(self, username, password):
@@ -38,14 +39,19 @@ class User(UserMixin):
 
 @login_manager.request_loader
 def load_user(request):
-    token = request.cookies.get('token')
+    token = request.args.get('token')
     print "cookies: ", request.cookies
+    print "token: ", token
+    if token is None:
+	token = request.cookies.get('token')
+	print "tokenparam: ", token
     if token is None:
         token = request.headers.get('Authorization')
-    if token is None:
-        token = request.args.get('token')
     if token is not None:
-        username,password = token.split(":") # naive token
+	try:
+	    username,password = token.split(":") # naive token
+	except:
+	    return None
         user_entry = User.get(username)
         if(user_entry is not None):
             user = User(user_entry[0],user_entry[1])
@@ -56,6 +62,7 @@ def load_user(request):
 
 @app.route('/')
 @app.route('/index')
+@app.route('/salt_auth')
 @login_required
 def index():
     response = app.make_response(render_template("index.html"))
@@ -158,8 +165,8 @@ def contextSortedItems(saltsetA, saltsetB):
 def dump():
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setQuery("""
-        PREFIX : <http://127.0.0.1:8890/>
-        PREFIX ma: <http://127.0.0.1:8890/matchAlgorithm/>
+        PREFIX : <http://eeboo.oerc.ox.ac.uk/>
+        PREFIX ma: <http://eeboo.oerc.ox.ac.uk/matchAlgorithm/>
         PREFIX dc: <http://purl.org/dc/elements/1.1/>
         SELECT DISTINCT ?saltAname ?saltBname ?score ?ma
         WHERE { 
@@ -200,13 +207,13 @@ def instance():
     if request.args.get('saltsetA') is None or request.args.get('saltsetB') is None:
         return render_template('index.html')
 
-    saltsetA = "http://127.0.0.1:8890/saltsets/" + request.args['saltsetA']
-    saltsetB = "http://127.0.0.1:8890/saltsets/" + request.args['saltsetB']
+    saltsetA = "http://eeboo.oerc.ox.ac.uk/saltsets/" + request.args['saltsetA']
+    saltsetB = "http://eeboo.oerc.ox.ac.uk/saltsets/" + request.args['saltsetB']
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     # First grab a list of all items in the two saltsets
     qS =  """
-        PREFIX salt: <http://127.0.0.1:8890/salt/>
-        PREFIX saltset: <http://127.0.0.1:8890/saltsets/>
+        PREFIX salt: <http://eeboo.oerc.ox.ac.uk/salt/>
+        PREFIX saltset: <http://eeboo.oerc.ox.ac.uk/saltsets/>
         select ?label ?uri ?saltset
         where {{ 
             {{
@@ -227,8 +234,8 @@ def instance():
 
     #Then grab all inter-saltset instance pairings with their scores for all matching algorithms
     qS =  """
-        PREFIX : <http://127.0.0.1:8890/>
-        PREFIX ma: <http://127.0.0.1:8890/matchAlgorithm/>
+        PREFIX : <http://eeboo.oerc.ox.ac.uk/>
+        PREFIX ma: <http://eeboo.oerc.ox.ac.uk/matchAlgorithm/>
         PREFIX dc: <http://purl.org/dc/elements/1.1/>
         SELECT DISTINCT ?mtc ?saltA ?saltAname ?saltB ?saltBname ?score ?ma
         WHERE {{ 
@@ -236,10 +243,10 @@ def instance():
                  :matchScore ?score .
             ?saltA :matchParticipant ?mtc ;
                  rdfs:label ?saltAname ;
-                 <http://127.0.0.1:8890/salt/in_salt_set> <{0}> .
+                 <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <{0}> .
             ?saltB :matchParticipant ?mtc ;
                  rdfs:label ?saltBname ;
-                 <http://127.0.0.1:8890/salt/in_salt_set> <{1}> .
+                 <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <{1}> .
             #FILTER(?saltA != ?saltB)
          }}
         ORDER BY DESC(?score) ?saltAname ?saltBname """
@@ -252,21 +259,22 @@ def instance():
 
     # Now grab any match decisions (confirmations/disputations) established in previous sessions
     qS = """
-    PREFIX : <http://127.0.0.1:8890/>
+    PREFIX : <http://eeboo.oerc.ox.ac.uk/>
     SELECT DISTINCT ?matchuri ?saltAuri ?saltAname ?saltBuri ?saltBname ?decision ?reason 
     WHERE {{
         ?matchuri a :matchDecision ;
                   :matchDecisionStatus ?decision ;
+		  :matchDecisionMaker "{2}" ;
                   :matchDecisionReason ?reason .
         ?saltAuri :matchParticipant ?matchuri ;
-                  <http://127.0.0.1:8890/salt/in_salt_set> <{0}> ;
+                  <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <{0}> ;
                   rdfs:label ?saltAname .
         ?saltBuri :matchParticipant ?matchuri ;
-                  <http://127.0.0.1:8890/salt/in_salt_set> <{1}> ;
+                  <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <{1}> ;
                   rdfs:label ?saltBname .
     }}
     ORDER BY ?saltAname ?saltBname """
-    queryString = qS.format(saltsetA, saltsetB)
+    queryString = qS.format(saltsetA, saltsetB, current_user.id)
     sparql.setQuery(queryString)
     matchDecisions = sparql.query().convert()
     
@@ -277,7 +285,7 @@ def instance():
     # Each has a value that is a list of dicts,
     # one dict (list item) per item / match
     toTemplate = dict()
-    sl = "http://127.0.0.1:8890/matchAlgorithm/simpleList"
+    sl = "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/simpleList"
     for result in simpleList["results"]["bindings"]:
         thisResult = { "uri": result["uri"]["value"],
                        "label": result["label"]["value"],
@@ -299,7 +307,7 @@ def instance():
         else:
             toTemplate[result["ma"]["value"]] = [thisResult]
 
-    cSI = "http://127.0.0.1:8890/matchAlgorithm/contextSortedItems"
+    cSI = "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/contextSortedItems"
     for result in contextSorted:
         thisResult = { "saltAuri": result[0] ,
                        "saltAname": result[1] ,
@@ -325,14 +333,16 @@ def instance():
             toTemplate[result["decision"]["value"]] = [thisResult]
     
     # Finally, grab all contextual metadata for the URIs in these saltsets
-    toTemplate["saltsetAContext"] = handleContextRequest({"saltset": saltsetA.replace("http://127.0.0.1:8890/saltsets", "")})
-    toTemplate["saltsetBContext"] = handleContextRequest({"saltset": saltsetB.replace("http://127.0.0.1:8890/saltsets", "")})
+    toTemplate["saltsetAContext"] = handleContextRequest({"saltset": saltsetA.replace("http://eeboo.oerc.ox.ac.uk/saltsets", "")})
+    toTemplate["saltsetBContext"] = handleContextRequest({"saltset": saltsetB.replace("http://eeboo.oerc.ox.ac.uk/saltsets", "")})
 
     return render_template('instanceAlign.html', results = toTemplate, userid=current_user.id)
 
 
 def storeConfirmDispute(message):
     message = sanitize(message)
+    if message['user'] == "demo":
+	return # demo users don't get to insert anything
     print "Storing " + message["aligneduri"] + " on server:"
     pprint (message);
     # Take the user's input and store it as triples
@@ -340,16 +350,16 @@ def storeConfirmDispute(message):
         sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
         sparql.method = "POST"
         #Generate triples:
-        turtle = """ INSERT INTO GRAPH <http://127.0.0.1:8890/matchDecisions>
+        turtle = """ INSERT INTO GRAPH <http://eeboo.oerc.ox.ac.uk/matchDecisions>
         {{
-            <{0}> a <http://127.0.0.1:8890/matchDecision> ;
-                <http://127.0.0.1:8890/matchDecisionStatus> '{1}' ;
-                <http://127.0.0.1:8890/matchDecisionReason> '{2}' ;
-                <http://127.0.0.1:8890/matchDecisionMaker> '{3}' ;
-                <http://127.0.0.1:8890/matchURI> <{4}> ;
-                <http://127.0.0.1:8890/matchDecisionTimestamp> '{5}' .
-            <{6}> <http://127.0.0.1:8890/matchParticipant> <{0}> .
-            <{7}> <http://127.0.0.1:8890/matchParticipant> <{0}> .
+            <{0}> a <http://eeboo.oerc.ox.ac.uk/matchDecision> ;
+                <http://eeboo.oerc.ox.ac.uk/matchDecisionStatus> '{1}' ;
+                <http://eeboo.oerc.ox.ac.uk/matchDecisionReason> '{2}' ;
+                <http://eeboo.oerc.ox.ac.uk/matchDecisionMaker> '{3}' ;
+                <http://eeboo.oerc.ox.ac.uk/matchURI> <{4}> ;
+                <http://eeboo.oerc.ox.ac.uk/matchDecisionTimestamp> '{5}' .
+            <{6}> <http://eeboo.oerc.ox.ac.uk/matchParticipant> <{0}> .
+            <{7}> <http://eeboo.oerc.ox.ac.uk/matchParticipant> <{0}> .
         }}"""
 	queryString = turtle.format(message['aligneduri'], message['confStatus'], message['confReason'], message['user'], message['aligneduri'], message['timestamp'], message['lefturi'], message['righturi'])
         print(queryString)
@@ -489,8 +499,8 @@ def sanitize(message) :
 
 
 if __name__ == '__main__':
-    socketio.run(app)
-    app.debug = True
+    socketio.run(app, port=4000)
+    app.debug = False
 
 
 
