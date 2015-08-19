@@ -10,8 +10,8 @@ PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
 
 SELECT DISTINCT ?uri ?label
 WHERE { 
-    GRAPH <http://slobr.linkedmusic.org/EMS> {
+    GRAPH <http://slobr.linkedmusic.org/SLICKMEM> {
         ?uri rdfs:label ?label ;
-            salt:in_saltset saltset:ems_composers .
+            salt:in_saltset saltset:slickmem_works .
     }
 }

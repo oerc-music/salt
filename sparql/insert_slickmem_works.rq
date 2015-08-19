@@ -1,4 +1,5 @@
 PREFIX mo: <http://purl.org/ontology/mo/>
+PREFIX po: <http://www.bbc.co.uk/ontologies/programmes/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX frbr: <http://purl.org/vocab/frbr/core#>
 PREFIX dct: <http://purl.org/dc/terms/>
@@ -8,10 +9,14 @@ PREFIX slobr: <http://slobr.linkedmusic.org/terms/>
 PREFIX salt: <http://slobr.linkedmusic.org/salt/>
 PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
 
-SELECT DISTINCT ?uri ?label
-WHERE { 
-    GRAPH <http://slobr.linkedmusic.org/EMS> {
-        ?uri rdfs:label ?label ;
-            salt:in_saltset saltset:ems_composers .
+INSERT {
+    GRAPH <http://slobr.linkedmusic.org/SLICKMEM> { 
+        ?uri salt:in_saltset saltset:slickmem_works .
     }
 }
+WHERE { 
+    GRAPH <http://slobr.linkedmusic.org/SLICKMEM> {
+        ?uri a mo:MusicalWork .
+    }
+}
+

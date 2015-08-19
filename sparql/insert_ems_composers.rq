@@ -1,22 +1,27 @@
 PREFIX mo: <http://purl.org/ontology/mo/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX frbr: <http://purl.org/vocab/frbr/core#>
 PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX slobr: <http://eeboo.oerc.ox.ac.uk/slobr/>
-PREFIX slickmem: <http://eeboo.oerc.ox.ac.uk/slickmem/>
-PREFIX ems: <http://eeboo.oerc.ox.ac.uk/EMS>
+PREFIX slickmem: <http://slobr.linkedmusic.org/slickmem/>
+PREFIX ems: <http://slobr.linkedmusic.org/terms/EMS/>
+PREFIX slobr: <http://slobr.linkedmusic.org/terms/>
+PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
+
 INSERT {
-    GRAPH <http://eeboo.oerc.ox.ac.uk/EMS> { 
+    GRAPH <http://slobr.linkedmusic.org/EMS> { 
         ?uri a ems:Composer ; 
              rdfs:label ?label ;
-        <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <http://eeboo.oerc.ox.ac.uk/saltsets/ems_composers> ;
-             <http://eeboo.oerc.ox.ac.uk/slobr/ems/linkedbrainz_uri> ?linkedbrainz_uri .
+        salt:in_saltset saltset:ems_composers ;
+             slobr:linkedbrainz_uri ?linkedbrainz_uri .
     }
 }
 WHERE { 
-    GRAPH <http://eeboo.oerc.ox.ac.uk/EMS> {
-        ?uri <http://eeboo.oerc.ox.ac.uk/slobr/ems/contributorRole> "Composer" ;
-           rdfs:label ?label ;
+    GRAPH <http://slobr.linkedmusic.org/EMS> {
+        ?uri slobr:contributor_role "Composer" ;
+        foaf:name ?label ;
            mo:musicbrainz_guid ?mbz_uri .
         BIND(IRI(CONCAT(STR(?mbz_uri), "#_")) as ?linkedbrainz_uri) .
     }
 }
+

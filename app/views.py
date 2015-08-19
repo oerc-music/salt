@@ -13,7 +13,7 @@ import re
 import uuid
 
 app = Flask(__name__)
-app.debug = False
+app.debug = True
 ***REMOVED***
 
 login_manager = LoginManager()
@@ -131,8 +131,8 @@ def contextPathsToSPARQL(cPaths, weight, context):
 
 
 def contextSortedItems(saltsetA, saltsetB):
-    saltsetA = saltsetA.replace("http://eeboo.oerc.ox.ac.uk/saltsets/", "").replace("-","")
-    saltsetB = saltsetB.replace("http://eeboo.oerc.ox.ac.uk/saltsets/", "").replace("-","")
+    saltsetA = saltsetA.replace("http://slobr.linkedmusic.org/saltsets/", "").replace("-","")
+    saltsetB = saltsetB.replace("http://slobr.linkedmusic.org/saltsets/", "").replace("-","")
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setReturnFormat(JSON)
     contextItemList = read_config(saltsetA, saltsetB)
@@ -165,8 +165,8 @@ def contextSortedItems(saltsetA, saltsetB):
 def dump():
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     sparql.setQuery("""
-        PREFIX : <http://eeboo.oerc.ox.ac.uk/>
-        PREFIX ma: <http://eeboo.oerc.ox.ac.uk/matchAlgorithm/>
+        PREFIX : <http://slobr.linkedmusic.org/>
+        PREFIX ma: <http://slobr.linkedmusic.org/matchAlgorithm/>
         PREFIX dc: <http://purl.org/dc/elements/1.1/>
         SELECT DISTINCT ?saltAname ?saltBname ?score ?ma
         WHERE { 
@@ -207,22 +207,22 @@ def instance():
     if request.args.get('saltsetA') is None or request.args.get('saltsetB') is None:
         return render_template('index.html')
 
-    saltsetA = "http://eeboo.oerc.ox.ac.uk/saltsets/" + request.args['saltsetA']
-    saltsetB = "http://eeboo.oerc.ox.ac.uk/saltsets/" + request.args['saltsetB']
+    saltsetA = "http://slobr.linkedmusic.org/saltsets/" + request.args['saltsetA']
+    saltsetB = "http://slobr.linkedmusic.org/saltsets/" + request.args['saltsetB']
     sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
     # First grab a list of all items in the two saltsets
     qS =  """
-        PREFIX salt: <http://eeboo.oerc.ox.ac.uk/salt/>
-        PREFIX saltset: <http://eeboo.oerc.ox.ac.uk/saltsets/>
-        select ?label ?uri ?saltset
+        PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+        PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
+        select distinct ?label ?uri ?saltset
         where {{ 
             {{
-               ?uri salt:in_salt_set <{0}>;
-                    salt:in_salt_set ?saltset ;
+               ?uri salt:in_saltset <{0}>;
+                    salt:in_saltset ?saltset ;
                     rdfs:label ?label .
             }} UNION {{
-               ?uri salt:in_salt_set <{1}>;
-                    salt:in_salt_set ?saltset ;
+               ?uri salt:in_saltset <{1}>;
+                    salt:in_saltset ?saltset ;
                     rdfs:label ?label .
             }}
         }}
@@ -234,8 +234,8 @@ def instance():
 
     #Then grab all inter-saltset instance pairings with their scores for all matching algorithms
     qS =  """
-        PREFIX : <http://eeboo.oerc.ox.ac.uk/>
-        PREFIX ma: <http://eeboo.oerc.ox.ac.uk/matchAlgorithm/>
+        PREFIX : <http://slobr.linkedmusic.org/>
+        PREFIX ma: <http://slobr.linkedmusic.org/matchAlgorithm/>
         PREFIX dc: <http://purl.org/dc/elements/1.1/>
         SELECT DISTINCT ?mtc ?saltA ?saltAname ?saltB ?saltBname ?score ?ma
         WHERE {{ 
@@ -243,10 +243,10 @@ def instance():
                  :matchScore ?score .
             ?saltA :matchParticipant ?mtc ;
                  rdfs:label ?saltAname ;
-                 <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <{0}> .
+                 <http://slobr.linkedmusic.org/salt/in_saltset> <{0}> .
             ?saltB :matchParticipant ?mtc ;
                  rdfs:label ?saltBname ;
-                 <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <{1}> .
+                 <http://slobr.linkedmusic.org/salt/in_saltset> <{1}> .
             #FILTER(?saltA != ?saltB)
          }}
         ORDER BY DESC(?score) ?saltAname ?saltBname """
@@ -259,19 +259,20 @@ def instance():
 
     # Now grab any match decisions (confirmations/disputations) established in previous sessions
     qS = """
-    PREFIX : <http://eeboo.oerc.ox.ac.uk/>
-    SELECT DISTINCT ?matchuri ?saltAuri ?saltAname ?saltBuri ?saltBname ?decision ?reason 
+    PREFIX : <http://slobr.linkedmusic.org/>
+    SELECT DISTINCT ?matchuri ?saltAuri ?saltAname ?saltBuri ?saltBname ?decision ?reason ?rowlookup
     WHERE {{
         ?matchuri a :matchDecision ;
                   :matchDecisionStatus ?decision ;
 		  :matchDecisionMaker "{2}" ;
                   :matchDecisionReason ?reason .
         ?saltAuri :matchParticipant ?matchuri ;
-                  <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <{0}> ;
+                  <http://slobr.linkedmusic.org/salt/in_saltset> <{0}> ;
                   rdfs:label ?saltAname .
         ?saltBuri :matchParticipant ?matchuri ;
-                  <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <{1}> ;
+                  <http://slobr.linkedmusic.org/salt/in_saltset> <{1}> ;
                   rdfs:label ?saltBname .
+        BIND(CONCAT(?saltAuri, "|", ?saltBuri) as ?rowlookup) .
     }}
     ORDER BY ?saltAname ?saltBname """
     queryString = qS.format(saltsetA, saltsetB, current_user.id)
@@ -285,10 +286,10 @@ def instance():
     # Each has a value that is a list of dicts,
     # one dict (list item) per item / match
     toTemplate = dict()
-    sl = "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/simpleList"
+    sl = "http://slobr.linkedmusic.org/matchAlgorithm/simpleList"
     for result in simpleList["results"]["bindings"]:
         thisResult = { "uri": result["uri"]["value"],
-                       "label": result["label"]["value"],
+                       "label": result["label"]["value"].replace('"', "'"), 
                        "saltset": result["saltset"]["value"]}
         if sl not in toTemplate:
             toTemplate[sl] = [thisResult]
@@ -298,21 +299,21 @@ def instance():
     for result in stringMatchResults["results"]["bindings"]:
         thisResult = { "matchuri": result["mtc"]["value"],
                       "saltAuri": result["saltA"]["value"],
-                      "saltAname": result["saltAname"]["value"],
+                      "saltAname": result["saltAname"]["value"].replace('"', "'"),
                       "saltBuri": result["saltB"]["value"],
-                      "saltBname": result["saltBname"]["value"],
+                      "saltBname": result["saltBname"]["value"].replace('"', "'"),
                       "score": result["score"]["value"]}
         if result["ma"]["value"] in toTemplate:
             toTemplate[result["ma"]["value"]].append(thisResult)
         else:
             toTemplate[result["ma"]["value"]] = [thisResult]
 
-    cSI = "http://eeboo.oerc.ox.ac.uk/matchAlgorithm/contextSortedItems"
+    cSI = "http://slobr.linkedmusic.org/matchAlgorithm/contextSortedItems"
     for result in contextSorted:
         thisResult = { "saltAuri": result[0] ,
-                       "saltAname": result[1] ,
+                       "saltAname": result[1].replace('"', "'"),
                        "saltBuri": result[2],
-                       "saltBname": result[3],
+                       "saltBname": result[3].replace('"', "'"),
                        "score":    result[4] }
         if cSI in toTemplate:
             toTemplate[cSI].append(thisResult)
@@ -324,17 +325,17 @@ def instance():
                       "decision": result["decision"]["value"],
                       "confReason": result["reason"]["value"],
                       "saltAuri": result["saltAuri"]["value"],
-                      "saltAname": result["saltAname"]["value"],
+                      "saltAname": result["saltAname"]["value"].replace('"', "'"),
                       "saltBuri": result["saltBuri"]["value"],
-                      "saltBname": result["saltBname"]["value"]}
+                      "saltBname": result["saltBname"]["value"].replace('"', "'")}
         if result["decision"]["value"] in toTemplate:
             toTemplate[result["decision"]["value"]].append(thisResult)
         else: 
             toTemplate[result["decision"]["value"]] = [thisResult]
     
     # Finally, grab all contextual metadata for the URIs in these saltsets
-    toTemplate["saltsetAContext"] = handleContextRequest({"saltset": saltsetA.replace("http://eeboo.oerc.ox.ac.uk/saltsets", "")})
-    toTemplate["saltsetBContext"] = handleContextRequest({"saltset": saltsetB.replace("http://eeboo.oerc.ox.ac.uk/saltsets", "")})
+    toTemplate["saltsetAContext"] = handleContextRequest({"saltset": saltsetA.replace("http://slobr.linkedmusic.org/saltsets", "")})
+    toTemplate["saltsetBContext"] = handleContextRequest({"saltset": saltsetB.replace("http://slobr.linkedmusic.org/saltsets", "")})
 
     return render_template('instanceAlign.html', results = toTemplate, userid=current_user.id)
 
@@ -350,16 +351,16 @@ def storeConfirmDispute(message):
         sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
         sparql.method = "POST"
         #Generate triples:
-        turtle = """ INSERT INTO GRAPH <http://eeboo.oerc.ox.ac.uk/matchDecisions>
+        turtle = """ INSERT INTO GRAPH <http://slobr.linkedmusic.org/matchDecisions>
         {{
-            <{0}> a <http://eeboo.oerc.ox.ac.uk/matchDecision> ;
-                <http://eeboo.oerc.ox.ac.uk/matchDecisionStatus> '{1}' ;
-                <http://eeboo.oerc.ox.ac.uk/matchDecisionReason> '{2}' ;
-                <http://eeboo.oerc.ox.ac.uk/matchDecisionMaker> '{3}' ;
-                <http://eeboo.oerc.ox.ac.uk/matchURI> <{4}> ;
-                <http://eeboo.oerc.ox.ac.uk/matchDecisionTimestamp> '{5}' .
-            <{6}> <http://eeboo.oerc.ox.ac.uk/matchParticipant> <{0}> .
-            <{7}> <http://eeboo.oerc.ox.ac.uk/matchParticipant> <{0}> .
+            <{0}> a <http://slobr.linkedmusic.org/matchDecision> ;
+                <http://slobr.linkedmusic.org/matchDecisionStatus> '{1}' ;
+                <http://slobr.linkedmusic.org/matchDecisionReason> '{2}' ;
+                <http://slobr.linkedmusic.org/matchDecisionMaker> '{3}' ;
+                <http://slobr.linkedmusic.org/matchURI> <{4}> ;
+                <http://slobr.linkedmusic.org/matchDecisionTimestamp> '{5}' .
+            <{6}> <http://slobr.linkedmusic.org/matchParticipant> <{0}> .
+            <{7}> <http://slobr.linkedmusic.org/matchParticipant> <{0}> .
         }}"""
 	queryString = turtle.format(message['aligneduri'], message['confStatus'], message['confReason'], message['user'], message['aligneduri'], message['timestamp'], message['lefturi'], message['righturi'])
         print(queryString)
@@ -405,7 +406,7 @@ def storeRowwiseConfirm(message):
     #TODO also store information on bulk nature of this all
 
 def handleContextRequest(message):
-    contextQuery = open("sparql/" + message["saltset"] + "_context.rq").read() #TODO validate filename first
+    contextQuery = open("sparql" + message["saltset"] + "_context.rq").read() #TODO validate filename first
     if "uri" in message: # specific context request - specify the uri we are given
         contextQuery = contextQuery.format("BIND(<" + message["uri"] + "> AS ?uri) .")
     else: #general context request - select all uris

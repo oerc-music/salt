@@ -3,6 +3,7 @@
 import sys
 import warnings
 from fuzzywuzzy import fuzz
+import uuid
 from pprint import pprint
 from SPARQLWrapper import SPARQLWrapper, JSON
 
@@ -79,21 +80,22 @@ def doMatches(a, b, threshold):
             for aURI in a[label]:
                 for bURI in b[label]:
                     turtle = """
-                        {0} a <http://127.0.0.1:8890/exactMatch> ;
-                            <http://127.0.0.1:8890/matchScore> 100 ;
-                            <http://127.0.0.1:8890/matchAlgorithm> <http://127.0.0.1:8890/matchAlgorithm/exactMatch> .
-                        {1} <http://127.0.0.1:8890/matchParticipant> {0} .
-                        {2} <http://127.0.0.1:8890/matchParticipant> {0} .
+                        {0} a <http://slobr.linkedmusic.org/exactMatch> ;
+                            <http://slobr.linkedmusic.org/matchScore> 100 ;
+                            <http://slobr.linkedmusic.org/matchAlgorithm> <http://slobr.linkedmusic.org/matchAlgorithm/exactMatch> .
+                        {1} <http://slobr.linkedmusic.org/matchParticipant> {0} .
+                        {2} <http://slobr.linkedmusic.org/matchParticipant> {0} .
                     """
                     # make up a matchuri based on the URIs of the two entities to be matched and the algo used
-                    matchuri = ( 
-                            "<http://127.0.0.1:8890/matchRelation/" + 
-                           aURI.replace("http://", "").replace("/", "--") + 
-                           "---" +
-                           bURI.replace("http://", "").replace("/","--") + 
-                           "---" + "127.0.0.1:8890/matchAlgorithm/exactMatch".replace("/", "--") + 
-                           ">" )
+                    matchuri = "<http://slobr.linkedmusic.org/matchRelation/{0}>".format(str(uuid.uuid4()))
+#                           ( "<http://slobr.linkedmusic.org/matchRelation/" + 
+#                           aURI.replace("http://", "").replace("/", "--") + 
+#                           "---" +
+#                           bURI.replace("http://", "").replace("/","--") + 
+#                           "---" + "slobr.linkedmusic.org/matchAlgorithm/exactMatch".replace("/", "--") + 
+#                           ">" )
                     print(turtle.format(matchuri, "<" + aURI + ">", "<" + bURI + ">"))
+            
 
         #Determine distance measures...
         fuzzratios = set()
@@ -113,20 +115,21 @@ def doMatches(a, b, threshold):
         # Now do the fuzzy matches
         for match in fuzzratios:
             turtle = """
-                {0} a <http://127.0.0.1:8890/fuzzyMatch> ;
-                    <http://127.0.0.1:8890/matchAlgorithm> <http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_{4}-ratio> ;
-                    <http://127.0.0.1:8890/matchScore> {3} .
-                {1} <http://127.0.0.1:8890/matchParticipant> {0} .
-                {2} <http://127.0.0.1:8890/matchParticipant> {0} .
+                {0} a <http://slobr.linkedmusic.org/fuzzyMatch> ;
+                    <http://slobr.linkedmusic.org/matchAlgorithm> <http://slobr.linkedmusic.org/matchAlgorithm/fuzzywuzzy_{4}-ratio> ;
+                    <http://slobr.linkedmusic.org/matchScore> {3} .
+                {1} <http://slobr.linkedmusic.org/matchParticipant> {0} .
+                {2} <http://slobr.linkedmusic.org/matchParticipant> {0} .
             """
-            matchuri = ( 
-                    "<http://127.0.0.1:8890/matchRelation/" + 
-                   match[0].replace("http://", "").replace("/", "--") + 
-                   "---" +
-                   match[1].replace("http://", "").replace("/","--") + 
-                   "---" + 
-                   match[3].replace("http://", "").replace("/","--") + 
-                   ">" )
+            matchuri = "<http://slobr.linkedmusic.org/matchRelation/{0}>".format(str(uuid.uuid4()))
+#            matchuri = ( 
+#                    "<http://slobr.linkedmusic.org/matchRelation/" + 
+#                   match[0].replace("http://", "").replace("/", "--") + 
+#                   "---" +
+#                   match[1].replace("http://", "").replace("/","--") + 
+#                   "---" + 
+#                   match[3].replace("http://", "").replace("/","--") + 
+#                   ">" )
             print(turtle.format(matchuri, "<" + match[0] + ">", "<" + match[1] + ">", match[2], match[3])) 
 
 

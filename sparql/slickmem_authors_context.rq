@@ -2,10 +2,12 @@ PREFIX mo: <http://purl.org/ontology/mo/>
 PREFIX frbr: <http://purl.org/vocab/frbr/core#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX sim: <http://purl.org/ontology/similarity/>
+PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
 SELECT distinct ?uri ?outside_uri ?books
 WHERE {{
     {0} 
-    ?uri <http://eeboo.oerc.ox.ac.uk/salt/in_salt_set> <http://eeboo.oerc.ox.ac.uk/saltsets/slickmem_persons> .
+    ?uri salt:in_saltset saltset:slickmem_authors .
     OPTIONAL {{
     ?slickmem_alignment sim:Subject ?uri ;
         sim:Object ?outside_uri ;

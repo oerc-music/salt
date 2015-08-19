@@ -6,12 +6,18 @@ PREFIX slickmem: <http://slobr.linkedmusic.org/slickmem/>
 PREFIX ems: <http://slobr.linkedmusic.org/terms/EMS/>
 PREFIX slobr: <http://slobr.linkedmusic.org/terms/>
 PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+PREFIX salt: <http://slobr.linkedmusic.org/salt/>
 PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
 
 SELECT DISTINCT ?uri ?label
 WHERE { 
-    GRAPH <http://slobr.linkedmusic.org/EMS> {
+    GRAPH <http://slobr.linkedmusic.org/SLICKMEM> {
         ?uri rdfs:label ?label ;
-            salt:in_saltset saltset:ems_composers .
+            salt:in_saltset saltset:slickmem_authors .
+        ?outside_uri <http://purl.org/ontology/similarity/Subject> ?uri ;
+                     <http://purl.org/ontology/similarity/distance> ?distance .  
+        FILTER(?distance = "None0None") . #excludes slickmem automated searches 
+
     }
 }
+

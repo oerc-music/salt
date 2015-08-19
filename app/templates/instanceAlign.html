@@ -2,6 +2,7 @@
     <head>
         <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='jquery-2.1.3.min.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='uuid.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='instanceAlign.js') }}"></script>
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='instanceAlign.css') }}">
         <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
@@ -23,15 +24,15 @@
             </div>
             <div id="modeSelectorContainer">
                 <select id="modeSelector" onChange="refreshLists()">
-                    <option value="http://127.0.0.1:8890/matchAlgorithm/confirmedMatch">Confirmed by you</option>
-                    <option value="http://127.0.0.1:8890/matchAlgorithm/disputedMatch">Disputed by you</option>
-                    <option selected="selected" value="http://127.0.0.1:8890/matchAlgorithm/simpleList">Unmatched lists</option>
-                    <option value="http://127.0.0.1:8890/matchAlgorithm/contextSortedItems">Context matches</option>
-                    <option value="http://127.0.0.1:8890/matchAlgorithm/exactMatch">Exact matches</option>
-                    <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-set-ratio">Token-Set ratio</option>
-                    <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_token-sort-ratio">Token-Sort ratio</option>
-                    <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_partial-ratio">Partial ratio</option>
-                    <option value="http://127.0.0.1:8890/matchAlgorithm/fuzzywuzzy_simple-ratio">Simple ratio</option>
+                    <option value="http://slobr.linkedmusic.org/matchAlgorithm/confirmedMatch">Confirmed by you</option>
+                    <option value="http://slobr.linkedmusic.org/matchAlgorithm/disputedMatch">Disputed by you</option>
+                    <option selected="selected" value="http://slobr.linkedmusic.org/matchAlgorithm/simpleList">Unmatched lists</option>
+                    <option value="http://slobr.linkedmusic.org/matchAlgorithm/contextSortedItems">Context matches</option>
+                    <option value="http://slobr.linkedmusic.org/matchAlgorithm/exactMatch">Exact matches</option>
+                    <option value="http://slobr.linkedmusic.org/matchAlgorithm/fuzzywuzzy_token-set-ratio">Token-Set ratio</option>
+                    <option value="http://slobr.linkedmusic.org/matchAlgorithm/fuzzywuzzy_token-sort-ratio">Token-Sort ratio</option>
+                    <option value="http://slobr.linkedmusic.org/matchAlgorithm/fuzzywuzzy_partial-ratio">Partial ratio</option>
+                    <option value="http://slobr.linkedmusic.org/matchAlgorithm/fuzzywuzzy_simple-ratio">Simple ratio</option>
                 </select>
             </div>
             <div id="search">
@@ -130,21 +131,22 @@
                     {% if mode != "saltsetAContext" and mode != "saltsetBContext" %}
                         {{outerDelim}}"{{ mode }}": [
                         {% set innerDelim = "" %} 
-                            {% if mode == 'http://127.0.0.1:8890/matchAlgorithm/simpleList' %}
+                            {% if mode == 'http://slobr.linkedmusic.org/matchAlgorithm/simpleList' %}
                                 {% for result in results[mode] %} {{innerDelim}}{
-                                    {% if result["saltset"] == "http://127.0.0.1:8890/saltsets/" ~ request.args.get('saltsetA') %}
+                                    {% if result["saltset"] == "http://slobr.linkedmusic.org/saltsets/" ~ request.args.get('saltsetA') %}
                                        "lefturi": "{{ result["uri"]|safe }}",
-                                       "leftlabel": "{{ result["label"]|safe }}"
+                                       "leftlabel": "{{ result["label"] }}"
                                     {% else %}
                                        "righturi": "{{ result["uri"]|safe }}",
-                                       "rightlabel": "{{ result["label"]|safe }}"
+                                       "rightlabel": "{{ result["label"] }}"
                                     {% endif %}
                                 }
                                 {% set innerDelim = "," %}
                                 {% endfor %}
-                            {% elif mode in ('http://127.0.0.1:8890/matchAlgorithm/confirmedMatch', 'http://127.0.0.1:8890/matchAlgorithm/disputedMatch') %}
+                            {% elif mode in ('http://slobr.linkedmusic.org/matchAlgorithm/confirmedMatch', 'http://slobr.linkedmusic.org/matchAlgorithm/disputedMatch') %}
                                  {% for result in results[mode] %} {{innerDelim}}{
                                     "matchuri": "{{ result["matchuri"]|safe }}",
+                                    "rowlookup": "{{ result["rowlookup"]|safe }}",
                                     "lefturi": "{{ result["saltAuri"]|safe }}",
                                     "leftlabel": "{{ result["saltAname"]|safe }}",
                                     "righturi": "{{ result["saltBuri"]|safe }}",
@@ -156,6 +158,7 @@
                             {% else %}
                                  {% for result in results[mode] %} {{innerDelim}}{
                                     "matchuri": "{{ result["matchuri"]|safe }}",
+                                    "rowlookup": "{{ result["rowlookup"]|safe }}",
                                     "lefturi": "{{ result["saltAuri"]|safe }}",
                                     "leftlabel": "{{ result["saltAname"]|safe }}",
                                     "righturi": "{{ result["saltBuri"]|safe }}",
