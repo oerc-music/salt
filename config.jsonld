@@ -85,15 +85,17 @@
                             "@id": "listitem:ems_works",
                             "@type": "salt:listItem",
                             "rdfs:label": {"@id": "listitem:ems_works_label"},
-                            "salt:in_saltset": {"@id": "saltsets:ems_works"},
+                            "salt:in_saltset": {"@id": "http://slobr.linkedmusic.org/saltsets/ems_works"},
                             "slobr:matchParticipant": {
                                 "@id": "listitem:fuzzyMatch"
                             },
                             "dct:contributor": { 
                                 "@id": "listitem:ems_composer",
-                                "@type": "ems:Composer",
                                 "slobr:matchParticipant": {
-                                    "@id": "listitem:matchDecision"
+                                    "@id": "listitem:matchDecision",
+                                    "@type": "slobr:matchDecision",
+                                    "slobr:matchDecisionMaker": "DavidLewis",
+                                    "slobr:matchDecisionStatus": {"@id": "http://slobr.linkedmusic.org/matchAlgorithm/confirmedMatch" }
                                 }
                              } 
                         }, 
@@ -101,13 +103,12 @@
                             "@id": "listitem:slickmem_works",
                             "@type": "salt:listItem",
                             "rdfs:label": {"@id": "listitem:slickmem_works_label"},
-                            "salt:in_saltset": { "@id":"saltsets:slickmem_works"},
+                            "salt:in_saltset": { "@id":"http://slobr.linkedmusic.org/saltsets/slickmem_works"},
                             "slobr:matchParticipant": { 
                                 "@id": "listitem:fuzzyMatch"
                             },
                             "frbr:creator": { 
                                 "@id": "listitem:slickmem_composer",
-                                "@type": "slickmem:Composer",
                                 "slobr:matchParticipant": {
                                     "@id": "listitem:authorComposerMatchDecision"
                                 }
@@ -115,10 +116,15 @@
                         },
                         {  
                             "@id": "listitem:slickmem_author",
-                            "@type": "slickmem:Author",
                             "slobr:matchParticipant": [ 
-                                {"@id": "listitem:matchDecision"},
-                                {"@id": "listitem:authorComposerMatchDecision"}
+                                {
+                                    "@id": "listitem:matchDecision",
+                                    "@type": "slobr:matchDecision"
+                                },
+                                {
+                                    "@id": "listitem:authorComposerMatchDecision",
+                                    "@type": "slobr:matchDecision"
+                                }
                             ]
                         }
                     ]
