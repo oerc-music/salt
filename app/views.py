@@ -126,7 +126,7 @@ def contextPathsToSPARQL(cPaths, weight, context):
     except:
 	content
     content += "BIND(" + weight + " as ?contextWeighting) .\n"
-    content = "\n\nSELECT * WHERE {" + content + "\n}"
+    content = "\n\nSELECT DISTINCT * WHERE {" + content + "\n}"
     return prefixes + content 
 
 
@@ -351,7 +351,7 @@ def storeConfirmDispute(message):
         sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
         sparql.method = "POST"
         #Generate triples:
-        turtle = """ INSERT INTO GRAPH <http://slobr.linkedmusic.org/matchDecisions>
+        turtle = """ INSERT INTO GRAPH <http://slobr.linkedmusic.org/matchDecisions/DavidLewis>
         {{
             <{0}> a <http://slobr.linkedmusic.org/matchDecision> ;
                 <http://slobr.linkedmusic.org/matchDecisionStatus> '{1}' ;

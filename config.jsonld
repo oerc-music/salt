@@ -33,7 +33,7 @@
                 { 
                     "@type": "salt:contextItem",
                     "@id":   "salt:ems_slickmem_musicbrainz",
-                    "salt:contextWeighting": "20",
+                    "salt:contextWeighting": "10",
                     "rdfs:label": "musicbrainz",
                     "salt:contextPath": [
                         {
@@ -78,7 +78,7 @@
                 { 
                     "@type": "salt:contextItem",
                     "@id":   "salt:ems_slickmem_composer_work_match",
-                    "salt:contextWeighting": "100",
+                    "salt:contextWeighting": "10",
                     "rdfs:label": "matchDecision",
                     "salt:contextPath": [
                         {
@@ -197,7 +197,7 @@
                 { 
                     "@type": "salt:contextItem",
                     "@id":   "salt:ems_slickmem_work",
-                    "salt:contextWeighting": "2",
+                    "salt:contextWeighting": "1",
                     "rdfs:label": "work",
                     "salt:contextPath": [
                         {

@@ -4,11 +4,14 @@ PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX salt: <http://slobr.linkedmusic.org/salt/>
 PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
 PREFIX slobr: <http://slobr.linkedmusic.org/terms/>
-select ?uri ?composerName ?role where  {{ 
+select ?uri ?composerName ?composerUri ?role ?musicbrainz where  {{ 
     {0}
     ?uri salt:in_saltset saltset:ems_works ; 
         rdfs:label ?title ;
-        dct:contributor ?contributor . 
-    ?contributor  slobr:contributor_role ?role ;
-        rdfs:label ?composerName 
+        dct:contributor ?composerUri . 
+    ?composerUri slobr:contributor_role ?role ;
+        rdfs:label ?composerName .
+    OPTIONAL {{
+        ?composerUri mo:musicbrainz_guid ?musicbrainz .
+    }}
 }}
