@@ -8,7 +8,7 @@ PREFIX slobr: <http://slobr.linkedmusic.org/terms/>
 PREFIX salt: <http://slobr.linkedmusic.org/salt/>
 PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
 
-INSERT {
+CONSTRUCT {
     GRAPH <http://slobr.linkedmusic.org/SLICKMEM> { 
         ?workuri rdfs:subClassOf slobr:Work ; 
                  frbr:creator ?creatoruri .
@@ -21,8 +21,11 @@ WHERE {
     GRAPH  <http://slobr.linkedmusic.org/SLICKMEM> {
      ?workuri a mo:MusicalWork ;
               dct:title ?worktitle;
-              frbr:creator ?creatorname .
-              BIND(IRI(CONCAT(STR(?workuri), "_creator")) as ?creatoruri) .
+              frbr:creator ?creator .
+      # ECOLM has full-fledged creator URIs and labels
+      FILTER(isIRI(?creator)) .
+      BIND(?creator as ?creatoruri) .
+      ?creatoruri rdfs:label ?creatorname .
     }
 }
 

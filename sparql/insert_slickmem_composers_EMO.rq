@@ -1,0 +1,31 @@
+PREFIX mo: <http://purl.org/ontology/mo/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX frbr: <http://purl.org/vocab/frbr/core#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX slickmem: <http://slobr.linkedmusic.org/slickmem/>
+PREFIX ems: <http://slobr.linkedmusic.org/terms/EMS/>
+PREFIX slobr: <http://slobr.linkedmusic.org/terms/>
+PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
+
+INSERT {
+    GRAPH <http://slobr.linkedmusic.org/SLICKMEM> { 
+        ?workuri rdfs:subClassOf slobr:Work ; 
+                 frbr:creator ?creatoruri .
+        ?creatoruri rdfs:label ?creatorname ;
+                    a slickmem:Composer ;
+                    salt:in_saltset saltset:slickmem_composers .
+    }
+}
+WHERE { 
+    GRAPH  <http://slobr.linkedmusic.org/SLICKMEM> {
+     ?workuri a mo:MusicalWork ;
+              dct:title ?worktitle;
+              frbr:creator ?creator .
+                  # EMO only has string literals - have to bootstrap creator URIs
+      FILTER(isLiteral(?creator)) .
+      BIND(IRI(CONCAT(STR(?workuri), "_creator")) as ?creatoruri) .
+      BIND(?creator as ?creatorname) .
+    }
+}
+
