@@ -148,7 +148,7 @@
             "salt:hasContextItem": [
                 { 
                     "@type": "salt:contextItem",
-                    "@id":   "salt:slickmem_authors_slickmem_composers_book",
+                    "@id":   "salt:slickmem_authors_slickmem_composers_book_exact",
                     "salt:contextWeighting": "10",
                     "rdfs:label": "book",
                     "salt:contextPath": [
@@ -161,7 +161,11 @@
                                 "foaf:maker": { 
                                     "@id": "_:book" 
                                 }
-                            } 
+                            },
+                            "slobr:matchParticipant": {
+                                "@id": "listitem:exact" ,
+                                "@type": "slobr:exactMatch"
+                            }
                         }, 
                         { 
                             "@id": "listitem:slickmem_composers",
@@ -173,10 +177,54 @@
                                     "@type": "mo:MusicalWork",
                                     "dct:isPartOf": { "@id": "_:book"}
                                 }
+                            },
+                            "slobr:matchParticipant": {
+                                "@id": "listitem:exact" ,
+                                "@type": "slobr:exactMatch"
+                            }
+                        }
+                    ]
+                },
+                { 
+                    "@type": "salt:contextItem",
+                    "@id":   "salt:slickmem_authors_slickmem_composers_book_exact",
+                    "salt:contextWeighting": "10",
+                    "rdfs:label": "book",
+                    "salt:contextPath": [
+                        {
+                            "@id": "listitem:slickmem_authors",
+                            "@type": "salt:listItem",
+                            "rdfs:label": {"@id": "listitem:slickmem_authors_label"},
+                            "salt:in_saltset": {"@id": "saltsets:slickmem_authors"},
+                            "@reverse": {
+                                "foaf:maker": { 
+                                    "@id": "_:book" 
+                                }
+                            },
+                            "slobr:matchParticipant": {
+                                "@id": "listitem:fuzz" ,
+                                "@type": "slobr:fuzzyMatch"
+                            }
+                        }, 
+                        { 
+                            "@id": "listitem:slickmem_composers",
+                            "@type": "salt:listItem",
+                            "rdfs:label": {"@id": "listitem:slickmem_composers_label"},
+                            "salt:in_saltset": { "@id":"saltsets:slickmem_composers"},
+                            "@reverse": {  
+                                "frbr:creator": {
+                                    "@type": "mo:MusicalWork",
+                                    "dct:isPartOf": { "@id": "_:book"}
+                                }
+                            },
+                            "slobr:matchParticipant": {
+                                "@id": "listitem:fuzz" ,
+                                "@type": "slobr:fuzzyMatch"
                             }
                         }
                     ]
                 }
+
             ]
         },
         {
