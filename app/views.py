@@ -14,7 +14,7 @@ import uuid
 
 app = Flask(__name__)
 app.debug = True
-***REMOVED***
+app.config['SECRET_KEY'] = 'CHANGE_ME_TO_A_USEFUL_SECRET_KEY'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -24,8 +24,7 @@ class User(UserMixin):
     # user auth stuff taken from http://gouthamanbalaraman.com/blog/minimal-flask-login-example.html
     # proxy for a proper database of users, with salted password hashes etc
     user_database = { 
-***REMOVED***
-***REMOVED***
+        "username1": ("username1","CHANGEthisPASSW0rD!"),
 	"demo": ("demo", "demo")
     }
     
