@@ -210,7 +210,6 @@ def instance():
 
     saltsetA = "http://slobr.linkedmusic.org/saltsets/" + request.args['saltsetA']
     saltsetB = "http://slobr.linkedmusic.org/saltsets/" + request.args['saltsetB']
-<<<<<<< HEAD
     sparql = SPARQLWrapper(sparqlEndpoint)
     # First grab a list of all items in the two saltsets
     qS =  """
