@@ -6,7 +6,7 @@ PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
 SELECT DISTINCT ?uri ?label 
 WHERE { 
    GRAPH <http://linkedbrainz.org> { 
-        ?uri salt:in_saltset saltset:lbz_artist ; 
+        ?uri salt:in_saltset saltset:lbz_artists ; 
              rdfs:label ?label .
    }
 }
