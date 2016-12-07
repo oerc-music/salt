@@ -20,6 +20,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 socketio = SocketIO(app)
 
+sparqlEndpoint = "http://salt.linkedmusic.org/sparql"
+
 class User(UserMixin):
     # user auth stuff taken from http://gouthamanbalaraman.com/blog/minimal-flask-login-example.html
     # proxy for a proper database of users, with salted password hashes etc
@@ -132,7 +134,7 @@ def contextPathsToSPARQL(cPaths, weight, context):
 def contextSortedItems(saltsetA, saltsetB):
     saltsetA = saltsetA.replace("http://slobr.linkedmusic.org/saltsets/", "").replace("-","")
     saltsetB = saltsetB.replace("http://slobr.linkedmusic.org/saltsets/", "").replace("-","")
-    sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+    sparql = SPARQLWrapper(sparqlEndpoint)
     sparql.setReturnFormat(JSON)
     contextItemList = read_config(saltsetA, saltsetB)
     
@@ -162,7 +164,7 @@ def contextSortedItems(saltsetA, saltsetB):
 
 @app.route('/dump')
 def dump():
-    sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+    sparql = SPARQLWrapper(sparqlEndpoint)
     sparql.setQuery("""
         PREFIX : <http://slobr.linkedmusic.org/>
         PREFIX ma: <http://slobr.linkedmusic.org/matchAlgorithm/>
@@ -208,7 +210,8 @@ def instance():
 
     saltsetA = "http://slobr.linkedmusic.org/saltsets/" + request.args['saltsetA']
     saltsetB = "http://slobr.linkedmusic.org/saltsets/" + request.args['saltsetB']
-    sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+<<<<<<< HEAD
+    sparql = SPARQLWrapper(sparqlEndpoint)
     # First grab a list of all items in the two saltsets
     qS =  """
         PREFIX salt: <http://slobr.linkedmusic.org/salt/>
@@ -347,7 +350,7 @@ def storeConfirmDispute(message):
     pprint (message);
     # Take the user's input and store it as triples
     if (message['confStatus'] and message['lefturi'] and message['righturi'] and message['aligneduri'] and message['timestamp'] and message['user']): 
-        sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+        sparql = SPARQLWrapper(sparqlEndpoint)
         sparql.method = "POST"
         #Generate triples:
         turtle = """ INSERT INTO GRAPH <http://slobr.linkedmusic.org/matchDecisions/DavidLewis>
@@ -411,7 +414,7 @@ def handleContextRequest(message):
     else: #general context request - select all uris
         contextQuery = contextQuery.format("")
 
-    sparql = SPARQLWrapper("http://127.0.0.1:8890/sparql")
+    sparql = SPARQLWrapper(sparqlEndpoint)
     sparql.setReturnFormat(JSON)
     sparql.setQuery(contextQuery)
     try:

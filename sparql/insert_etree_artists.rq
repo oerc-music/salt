@@ -1,0 +1,19 @@
+PREFIX mo: <http://purl.org/ontology/mo/>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
+INSERT { 
+    graph <http://etree.linkedmusic.org/data/graphs/artists> { 
+        ?uri salt:in_saltset saltset:etree_artists ;
+            rdfs:label ?label .
+    }
+}
+WHERE { 
+    graph <http://etree.linkedmusic.org/data/graphs/artists> { 
+        ?uri a mo:MusicArtist; 
+            skos:prefLabel ?label .
+    }
+}
+
+
