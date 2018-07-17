@@ -4,7 +4,7 @@ from flask.ext.socketio import SocketIO, emit
 from flask.ext.login import LoginManager, UserMixin, login_required, login_user, current_user
 import sys
 from pprint import pprint
-from SPARQLWrapper import SPARQLWrapper, JSON
+from SPARQLWrapper import SPARQLWrapper, JSON, DIGEST
 from rdflib import Graph, plugin, URIRef, Literal
 from rdflib.parser import Parser
 from rdflib.serializer import Serializer
@@ -15,12 +15,14 @@ import uuid
 app = Flask(__name__)
 app.debug = True
 app.config['SECRET_KEY'] = 'CHANGE_ME_TO_A_USEFUL_SECRET_KEY'
+app.config['SPARQLUser'] = 'SPARQL Endpoint user name'
+app.config['SPARQLPassword'] = 'SPARQL Endpoint password'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 socketio = SocketIO(app)
 
-sparqlEndpoint = "http://salt.linkedmusic.org/sparql"
+sparqlEndpoint = "http://INSERT-SPARQL-ENDPOINT-URL-HERE.example.com/sparql"
 
 class User(UserMixin):
     # user auth stuff taken from http://gouthamanbalaraman.com/blog/minimal-flask-login-example.html
@@ -135,6 +137,8 @@ def contextSortedItems(saltsetA, saltsetB):
     saltsetA = saltsetA.replace("http://slobr.linkedmusic.org/saltsets/", "").replace("-","")
     saltsetB = saltsetB.replace("http://slobr.linkedmusic.org/saltsets/", "").replace("-","")
     sparql = SPARQLWrapper(sparqlEndpoint)
+    sparql.setHTTPAuth(DIGEST)
+    sparql.setCredentials(app.config['SPARQLUser'], app.config['SPARQLPassword'])
     sparql.setReturnFormat(JSON)
     contextItemList = read_config(saltsetA, saltsetB)
     
@@ -165,6 +169,8 @@ def contextSortedItems(saltsetA, saltsetB):
 @app.route('/dump')
 def dump():
     sparql = SPARQLWrapper(sparqlEndpoint)
+    sparql.setHTTPAuth(DIGEST)
+    sparql.setCredentials(app.config['SPARQLUser'], app.config['SPARQLPassword'])
     sparql.setQuery("""
         PREFIX : <http://slobr.linkedmusic.org/>
         PREFIX ma: <http://slobr.linkedmusic.org/matchAlgorithm/>
@@ -211,6 +217,8 @@ def instance():
     saltsetA = "http://slobr.linkedmusic.org/saltsets/" + request.args['saltsetA']
     saltsetB = "http://slobr.linkedmusic.org/saltsets/" + request.args['saltsetB']
     sparql = SPARQLWrapper(sparqlEndpoint)
+    sparql.setHTTPAuth(DIGEST)
+    sparql.setCredentials(app.config['SPARQLUser'], app.config['SPARQLPassword'])
     # First grab a list of all items in the two saltsets
     qS =  """
         PREFIX salt: <http://slobr.linkedmusic.org/salt/>
@@ -350,6 +358,8 @@ def storeConfirmDispute(message):
     # Take the user's input and store it as triples
     if (message['confStatus'] and message['lefturi'] and message['righturi'] and message['aligneduri'] and message['timestamp'] and message['user']): 
         sparql = SPARQLWrapper(sparqlEndpoint)
+        sparql.setHTTPAuth(DIGEST)
+        sparql.setCredentials(app.config['SPARQLUser'], app.config['SPARQLPassword'])
         sparql.method = "POST"
         #Generate triples:
         turtle = """ INSERT INTO GRAPH <http://slobr.linkedmusic.org/matchDecisions/DavidLewis>
@@ -414,6 +424,8 @@ def handleContextRequest(message):
         contextQuery = contextQuery.format("")
 
     sparql = SPARQLWrapper(sparqlEndpoint)
+    sparql.setHTTPAuth(DIGEST)
+    sparql.setCredentials(app.config['SPARQLUser'], app.config['SPARQLPassword'])
     sparql.setReturnFormat(JSON)
     sparql.setQuery(contextQuery)
     try:
