@@ -413,41 +413,43 @@ function refreshLists(contextFilter) {
     var newScoresHTML = "";
     var alternate = 1; // used for alternating stripe effect in display decisions view
     var altString;
-    for (var match in fuzz[mA]) { 
-        alternate *= -1;
-        if(alternate>0 && mode === "displayDecisions") { 
-            altString = " alternate";
-        } else {
-            altString = "";
-        }
-        // Populate the left and right list with URIs and labels from the fuzz object
-        // Only include if not filtered out by contextFilter, and (no search is specified; or the search is being performed on
-        // the other side (leftright); or the regex matches)
-        if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') {
-            if((typeof(contextFilter) === "undefined" || $.inArray(fuzz[mA][match]["lefturi"], contextFilter) >= 0) &&  
-               (typeof(searchRE) === "undefined" || searchMode === "Right" || searchRE.test(fuzz[mA][match]["leftlabel"]))) { 
-                newLeftHTML += '<div class="scrollitem'+ altString + 
-                    '" title="' + fuzz[mA][match]["lefturi"] + '"><span>' + fuzz[mA][match]["leftlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i><i class="fa fa-check"></i></div>\n';
-            } else if(mode !== "simpleList") { 
-                // if we are in any mode where left matches right (i.e. anything but simpleList)...
-                // ...continue on to next match set and print nothing on either side for this one
-                continue;
+    if(typeof fuzz !== "undefined") { 
+        for (var match in fuzz[mA]) { 
+            alternate *= -1;
+            if(alternate>0 && mode === "displayDecisions") { 
+                altString = " alternate";
+            } else {
+                altString = "";
             }
-        }
-        if(typeof fuzz[mA][match]["righturi"] !== 'undefined') { 
-            if((typeof(contextFilter) === "undefined" || $.inArray(fuzz[mA][match]["righturi"], contextFilter) >= 0) &&  
-               (typeof(searchRE) === "undefined" || searchMode === "Left" || searchRE.test(fuzz[mA][match]["rightlabel"]))) { 
-                newRightHTML += '<div class="scrollitem' + altString +
-                    '" title="' + fuzz[mA][match]["righturi"] + '"><span>' + fuzz[mA][match]["rightlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i><i class="fa fa-check"></i></div>\n';
-            } else if (mode !== "simpleList") { 
-                // see above (for left label)
-                continue;
+            // Populate the left and right list with URIs and labels from the fuzz object
+            // Only include if not filtered out by contextFilter, and (no search is specified; or the search is being performed on
+            // the other side (leftright); or the regex matches)
+            if(typeof fuzz[mA][match]["lefturi"] !== 'undefined') {
+                if((typeof(contextFilter) === "undefined" || $.inArray(fuzz[mA][match]["lefturi"], contextFilter) >= 0) &&  
+                   (typeof(searchRE) === "undefined" || searchMode === "Right" || searchRE.test(fuzz[mA][match]["leftlabel"]))) { 
+                    newLeftHTML += '<div class="scrollitem'+ altString + 
+                        '" title="' + fuzz[mA][match]["lefturi"] + '"><span>' + fuzz[mA][match]["leftlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i><i class="fa fa-check"></i></div>\n';
+                } else if(mode !== "simpleList") { 
+                    // if we are in any mode where left matches right (i.e. anything but simpleList)...
+                    // ...continue on to next match set and print nothing on either side for this one
+                    continue;
+                }
             }
-        }   
-        if(mode === "displayDecisions") {
-            newScoresHTML += '<div class="scrollitem'+altString+'" title="'+ fuzz[mA][match]["confReason"] + '">' + fuzz[mA][match]["confReason"] + '&nbsp;</div>\n';
-        } else {
-            newScoresHTML += '<div class="scrollitem">' + fuzz[mA][match]["score"] + '</div>\n';
+            if(typeof fuzz[mA][match]["righturi"] !== 'undefined') { 
+                if((typeof(contextFilter) === "undefined" || $.inArray(fuzz[mA][match]["righturi"], contextFilter) >= 0) &&  
+                   (typeof(searchRE) === "undefined" || searchMode === "Left" || searchRE.test(fuzz[mA][match]["rightlabel"]))) { 
+                    newRightHTML += '<div class="scrollitem' + altString +
+                        '" title="' + fuzz[mA][match]["righturi"] + '"><span>' + fuzz[mA][match]["rightlabel"] + '</span> <i class="fa fa-eye-slash" onclick="toggleListExclusion(this)"></i><i class="fa fa-check"></i></div>\n';
+                } else if (mode !== "simpleList") { 
+                    // see above (for left label)
+                    continue;
+                }
+            }   
+            if(mode === "displayDecisions") {
+                newScoresHTML += '<div class="scrollitem'+altString+'" title="'+ fuzz[mA][match]["confReason"] + '">' + fuzz[mA][match]["confReason"] + '&nbsp;</div>\n';
+            } else {
+                newScoresHTML += '<div class="scrollitem">' + fuzz[mA][match]["score"] + '</div>\n';
+            }
         }
     }
     leftList.html(newLeftHTML);

@@ -179,30 +179,32 @@
             {% for mode in ("saltsetAContext", "saltsetBContext") %}
             fuzz["{{mode}}"] = {
             {% set outerDelim = "" %}
-                {% for uri in results[mode] %} 
-                {{outerDelim}}
-                    {% set innerDelim = "" %}
-                    "{{uri}}": { 
-                    {% for param in results[mode][uri] %}
-                        {{ innerDelim }}
-                        "{{ param }}": [
-                            {% set innestDelim = "" %}
-                            {% for entry in results[mode][uri][param] %} 
-                                {{innestDelim}}
-                                {
-                                "value": "{{ entry[0] }}",
-                                "type": "{{ entry[1] }}" 
-                                }
-                                {% set innestDelim = "," %}
-                            {% endfor %}
-                        ]
-                        {% set innerDelim = "," %}
+                {% if results[mode] is iterable %}
+                    {% for uri in results[mode] %} 
+                    {{outerDelim}}
+                        {% set innerDelim = "" %}
+                        "{{uri}}": { 
+                        {% for param in results[mode][uri] %}
+                            {{ innerDelim }}
+                            "{{ param }}": [
+                                {% set innestDelim = "" %}
+                                {% for entry in results[mode][uri][param] %} 
+                                    {{innestDelim}}
+                                    {
+                                    "value": "{{ entry[0] }}",
+                                    "type": "{{ entry[1] }}" 
+                                    }
+                                    {% set innestDelim = "," %}
+                                {% endfor %}
+                            ]
+                            {% set innerDelim = "," %}
+                        {% endfor %}
+                        }
+                        
+                        {% set outerDelim = "," %}
                     {% endfor %}
-                    }
-                    
-                    {% set outerDelim = "," %}
-                {% endfor %}
-            };
+                };
+                {% endif %}
             {% endfor %}
         </script>
         </body>
