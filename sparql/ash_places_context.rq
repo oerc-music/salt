@@ -1,0 +1,13 @@
+PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
+
+select ?uri where  {{
+    {0}
+    ?uri salt:in_saltset <http://slobr.linkedmusic.org/saltsets/ash_places> .
+    ?uri crm:P1_is_identified_by ?appelenuri .
+    ?appelenuri rdfs:label ?appelenlabel .
+    ?production crm:P7_took_place_at ?uri .
+    ?production crm:P4_has_time-span ?timespan .
+    ?timespan crm:P82a_begin_of_the_begin ?start .
+    ?timespan crm:P82b_end_of_the_end ?end
+}}

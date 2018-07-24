@@ -22,14 +22,14 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 socketio = SocketIO(app)
 
-sparqlEndpoint = "http://INSERT-SPARQL-ENDPOINT-URL-HERE.example.com/sparql"
+sparqlEndpoint = "http://localhost:9999/blazegraph/namespace/exemplar/sparql"
 
 class User(UserMixin):
     # user auth stuff taken from http://gouthamanbalaraman.com/blog/minimal-flask-login-example.html
     # proxy for a proper database of users, with salted password hashes etc
     user_database = { 
         "username1": ("username1","CHANGEthisPASSW0rD!"),
-	"demo": ("demo", "demo")
+	    "demo": ("demo", "demo")
     }
     
     def __init__(self, username, password):
