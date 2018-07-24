@@ -384,7 +384,7 @@ def storeConfirmDispute(message):
         sparql.setCredentials(app.config['SPARQLUser'], app.config['SPARQLPassword'])
         sparql.method = "POST"
         #Generate triples:
-        turtle = """ INSERT INTO GRAPH <http://slobr.linkedmusic.org/matchDecisions/DavidLewis>
+        turtle = """ INSERT INTO GRAPH <http://slobr.linkedmusic.org/matchDecisions/""" + app.config['SPARQLUser'] + """>
         {{
             <{0}> a <http://slobr.linkedmusic.org/matchDecision> ;
                 <http://slobr.linkedmusic.org/matchDecisionStatus> '{1}' ;
