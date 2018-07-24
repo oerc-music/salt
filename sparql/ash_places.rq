@@ -1,0 +1,16 @@
+PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
+
+SELECT DISTINCT ?uri ?label
+WHERE {
+    GRAPH <http://www.ashmus.ox.ac.uk/> {
+        ?uri a crm:E53_Place .
+        ?uri crm:P1_is_identified_by ?appellation .
+        ?appellation rdfs:label ?lab .
+        ?uri salt:in_saltset <http://slobr.linkedmusic.org/saltsets/ash_places> .
+        BIND(REPLACE(?lab, "\\[", "(") as ?lab1) .
+        BIND(REPLACE(?lab1, "\\{", "(") as ?lab2) .
+        BIND(REPLACE(?lab2, "\\}", ")") as ?lab3) .
+        BIND(REPLACE(?lab3, "\\]", ")") as ?label) .
+    }
+}

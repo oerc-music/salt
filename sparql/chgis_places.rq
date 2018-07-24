@@ -1,0 +1,9 @@
+PREFIX salt: <http://slobr.linkedmusic.org/salt/>
+
+SELECT DISTINCT ?uri ?label
+WHERE {
+    GRAPH <http://maps.cga.harvard.edu/tgaz/> {
+        ?uri rdfs:label ?label ;
+            salt:in_saltset <http://slobr.linkedmusic.org/saltsets/chgis_places> .
+    }
+}
