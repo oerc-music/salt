@@ -297,9 +297,15 @@ def instance():
     toTemplate = dict()
     sl = "http://slobr.linkedmusic.org/matchAlgorithm/simpleList"
     for result in simpleList["results"]["bindings"]:
-        thisResult = { "uri": result["uri"]["value"],
-                       "label": result["label"]["value"].replace('"', "'"), 
-                       "saltset": result["saltset"]["value"]}
+        if result["saltset"]["value"] == saltsetA:
+            thisResult = { "lefturi":   result["uri"]["value"],
+                           "leftlabel": result["label"]["value"].replace('"', "'")}
+        elif result["saltset"]["value"] == saltsetB:
+            thisResult = { "righturi":   result["uri"]["value"],
+                           "rightlabel": result["label"]["value"].replace('"', "'")}
+        else:
+            print "Warning: Unexpected saltset. Found " + result["saltset"]["value"]
+            print " Expected one of "+saltsetA +" or " + saltsetB
         if sl not in toTemplate:
             toTemplate[sl] = [thisResult]
         else:
@@ -307,10 +313,10 @@ def instance():
 
     for result in stringMatchResults["results"]["bindings"]:
         thisResult = { "matchuri": result["mtc"]["value"],
-                      "saltAuri": result["saltA"]["value"],
-                      "saltAname": result["saltAname"]["value"].replace('"', "'"),
-                      "saltBuri": result["saltB"]["value"],
-                      "saltBname": result["saltBname"]["value"].replace('"', "'"),
+                      "lefturi": result["saltA"]["value"],
+                      "leftlabel": result["saltAname"]["value"].replace('"', "'"),
+                      "righturi": result["saltB"]["value"],
+                      "rightlabel": result["saltBname"]["value"].replace('"', "'"),
                       "score": result["score"]["value"]}
         if result["ma"]["value"] in toTemplate:
             toTemplate[result["ma"]["value"]].append(thisResult)
@@ -319,10 +325,12 @@ def instance():
 
     cSI = "http://slobr.linkedmusic.org/matchAlgorithm/contextSortedItems"
     for result in contextSorted:
-        thisResult = { "saltAuri": result[0] ,
-                       "saltAname": result[1].replace('"', "'"),
-                       "saltBuri": result[2],
-                       "saltBname": result[3].replace('"', "'"),
+        thisResult = { "matchuri": "", # cargo cult - this is in working template
+                      "rowlookup": "", # cargo cult - this is in working template
+                       "lefturi": result[0] ,
+                       "leftlabel": result[1].replace('"', "'"),
+                       "righturi": result[2],
+                       "rightlabel": result[3].replace('"', "'"),
                        "score":    result[4] }
         if cSI in toTemplate:
             toTemplate[cSI].append(thisResult)
@@ -331,20 +339,34 @@ def instance():
 
     for result in matchDecisions["results"]["bindings"]:
         thisResult = {"matchuri": result["matchuri"]["value"],
-                      "decision": result["decision"]["value"],
+                      "rowlookup": "", # cargo cult - this is in working template
                       "confReason": result["reason"]["value"],
-                      "saltAuri": result["saltAuri"]["value"],
-                      "saltAname": result["saltAname"]["value"].replace('"', "'"),
-                      "saltBuri": result["saltBuri"]["value"],
-                      "saltBname": result["saltBname"]["value"].replace('"', "'")}
+                      "lefturi": result["saltAuri"]["value"],
+                      "leftlabel": result["saltAname"]["value"].replace('"', "'"),
+                      "righturi": result["saltBuri"]["value"],
+                      "rightlabel": result["saltBname"]["value"].replace('"', "'")}
         if result["decision"]["value"] in toTemplate:
             toTemplate[result["decision"]["value"]].append(thisResult)
         else: 
             toTemplate[result["decision"]["value"]] = [thisResult]
-    
+
     # Finally, grab all contextual metadata for the URIs in these saltsets
-    toTemplate["saltsetAContext"] = handleContextRequest({"saltset": saltsetA.replace("http://slobr.linkedmusic.org/saltsets", "")})
-    toTemplate["saltsetBContext"] = handleContextRequest({"saltset": saltsetB.replace("http://slobr.linkedmusic.org/saltsets", "")})
+    # Special prize for the first person to do all this in a single list comprehension...
+    contextA = handleContextRequest({"saltset": saltsetA.replace("http://slobr.linkedmusic.org/saltsets", "")})
+    saltsetAContext = {};
+    for uri, params in contextA.items():
+        saltsetAContext[uri] = {}
+        for param, values in params.items():
+            saltsetAContext[uri][param] = [{"value": entry[0], "type": entry[1]} for entry in values]
+    toTemplate['saltsetAContext'] = saltsetAContext
+
+    contextB = handleContextRequest({"saltset": saltsetB.replace("http://slobr.linkedmusic.org/saltsets", "")})
+    saltsetBContext = {};
+    for uri, params in contextB.items():
+        saltsetBContext[uri] = {}
+        for param, values in params.items():
+            saltsetBContext[uri][param] = [{"value": entry[0], "type": entry[1]} for entry in values]
+    toTemplate['saltsetBContext'] = saltsetBContext
 
     return render_template('instanceAlign.html', results = toTemplate, userid=current_user.id)
 
