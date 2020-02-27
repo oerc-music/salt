@@ -6,7 +6,6 @@ PREFIX slickmem: <http://slobr.linkedmusic.org/slickmem/>
 PREFIX ems: <http://slobr.linkedmusic.org/terms/EMS/>
 PREFIX slobr: <http://slobr.linkedmusic.org/terms/>
 PREFIX salt: <http://slobr.linkedmusic.org/salt/>
-PREFIX salt: <http://slobr.linkedmusic.org/salt/>
 PREFIX saltset: <http://slobr.linkedmusic.org/saltsets/>
 
 SELECT DISTINCT ?uri ?label
