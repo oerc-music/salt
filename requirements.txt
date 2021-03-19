@@ -9,7 +9,7 @@ greenlet==0.4.5
 html5lib==0.999
 isodate==0.5.1
 itsdangerous==0.24
-Jinja2==2.7.3
+Jinja2==2.11.3
 MarkupSafe==0.23
 pyparsing==2.0.3
 python-Levenshtein==0.12.0
